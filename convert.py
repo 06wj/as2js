@@ -1,17 +1,15 @@
 # coding:utf-8
 
 """
-Converts ActionScript3 to JavaScript.
-
+Converts some ActionScript3 to a JavaScript file.
+Usage:  python convert.py actionscriptFile.as [...]
+Overwrites each .js file parallel to each .as file.
 Forked from 06\_jw as2js by Ethan Kennerly.
 """
 
 import codecs
 import os
 import re
-import json
-import shutil
-from os.path import getsize, splitext
 
 import convert_cfg as cfg
 
@@ -164,12 +162,11 @@ def convert(text):
     str += '\n' + methods(klassName, klassContent)
     str += '\n});'
     str += '\n\n' + staticProps(klassName, klassContent)
+    ## str += '\n' + staticMethods(klassName, klassContent)
     return str
 
 
-def write(filePath):
-    asPath = filePath + '.as'
-    jsPath = filePath + '.js'
+def convertFile(asPath, jsPath):
     text = codecs.open(asPath, 'r', 'utf-8').read()
     str = convert(text)
     f = codecs.open(jsPath, 'w', 'utf-8')
@@ -177,14 +174,20 @@ def write(filePath):
     f.write(str)
     f.close()   
 
-def main():
-    filePath = os.path.join('test', 'FlxBasic')
-    write(filePath)
+
+def convertFiles(asPaths):
+    for asPath in asPaths:
+        root, ext = os.path.splitext(asPath)
+        jsPath = root + '.js'
+        convertFile(asPath, jsPath)
+
 
 if '__main__' == __name__:
     import sys
-    if len(sys.argv) <= 1 or '--test' != sys.argv[1]:
-        main()
+    if len(sys.argv) <= 1:
+        print __doc__
+    if 2 <= len(sys.argv) and '--test' != sys.argv[1]:
+        convertFiles(sys.argv[1:])
     import doctest
     doctest.testmod()
 
