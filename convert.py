@@ -19,11 +19,11 @@ klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\
 propP =  re.compile('(?:private|protected|public|internal)\s+var\s+(\w+)\s*:\s*(\w+)', re.S)
 
 #                                                     override        private                     function    func    (int a    )      :    int    {         }  
-funcP =  re.compile('(\s+/\*\*[\t\n][\s\S]+?\*/\s+)(?:override\s+)?(?:private|protected|public)\s+function\s+(\w+)\s*\([\s\S]*?\)\s*(?::\s*(\w+))?\s*{([\s\S]*?)}', re.S)
+funcP =  re.compile('(\s+/\*\*[\t\r\n][\s\S]+?\*/\s+)(?:override\s+)?(?:private|protected|public)\s+function\s+(\w+)\s*\([\s\S]*?\)\s*(?::\s*(\w+))?\s*{([\s\S]*?)}', re.S)
 
 staticPropP = re.compile('static\s+(?:private|protected|public|internal)\s+var\s+(\w+)\s*:\s*(\w+)', re.S)
 
-noteP = re.compile('\*\*([\t\n][\s\S]+?)\*/', re.S)
+noteP = re.compile('\*\*([\t\r\n][\s\S]+?)\*/', re.S)
 
 
 klass = klassP.findall(text)[0]
