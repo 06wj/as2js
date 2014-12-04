@@ -18,20 +18,26 @@ Features
 
  * Either order of declaring static.
 
+ * Declare member variables.
+
+ * Extend class idiom.
+
+ * Methods in extend idiom.
+
 Todo
 ====
 
- * Member variables.
+ * Static methods.
 
  * Constructor assignment.
+
+ * Default values.
 
  * Constructor arguments.
 
  * Specify multiple files.
 
  * Configuration file.
-
- * Extend class idiom.
 
  * Prefix private variables with underscore.
 

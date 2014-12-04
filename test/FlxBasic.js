@@ -7,7 +7,12 @@ var FlxBasic = cc.Class.extend({
     cameras: undefined,
     ignoreDrawDebug: undefined,
 
-    ctor: function()
+
+		
+		/**
+		 * Instantiate the basic flixel object.
+		 */
+		    ctor: function()
     {
 
 			ID = -1;
@@ -18,9 +23,6 @@ var FlxBasic = cc.Class.extend({
 			ignoreDrawDebug = false;
 		
     }
-});
-var FlxBasic._ACTIVECOUNT;
-var FlxBasic._VISIBLECOUNT;
 
 
 		/**
@@ -28,37 +30,51 @@ var FlxBasic._VISIBLECOUNT;
 		 * <code>destroy()</code> on class members if necessary.
 		 * Don't forget to call <code>super.destroy()</code>!
 		 */
-		FlxBasic.prototype.destroy = function(){}
+		    destroy: function()
+    {
+
+    }
 
 		
 		/**
 		 * Pre-update is called right before <code>update()</code> on each object in the game loop.
 		 */
-		FlxBasic.prototype.preUpdate = function(){
+		    preUpdate: function()
+    {
+
 			_ACTIVECOUNT++;
-		}
+		
+    }
 
 		
 		/**
 		 * Override this function to update your class's position and appearance.
 		 * This is where most of your game rules and behavioral code will go.
 		 */
-		FlxBasic.prototype.update = function(){
-		}
+		    update: function()
+    {
+
+		
+    }
 
 		
 		/**
 		 * Post-update is called right after <code>update()</code> on each object in the game loop.
 		 */
-		FlxBasic.prototype.postUpdate = function(){
-		}
+		    postUpdate: function()
+    {
+
+		
+    }
 
 		
 		/**
 		 * Override this function to control how the object is drawn.
 		 * Overriding <code>draw()</code> is rarely necessary, but can be very useful.
 		 */
-		FlxBasic.prototype.draw = function(){
+		    draw: function()
+    {
+
 			if(cameras == null)
 				cameras = FlxG.cameras;
 			var camera:FlxCamera;
@@ -70,7 +86,8 @@ var FlxBasic._VISIBLECOUNT;
 				_VISIBLECOUNT++;
 				if(FlxG.visualDebug && !ignoreDrawDebug)
 					drawDebug(camera);
-			}
+			
+    }
 
 		
 		/**
@@ -79,8 +96,11 @@ var FlxBasic._VISIBLECOUNT;
 		 * 
 		 * @param	Camera	Which camera to draw the debug visuals to.
 		 */
-		FlxBasic.prototype.drawDebug = function(){
-		}
+		    drawDebug: function(Camera=null)
+    {
+
+		
+    }
 
 		
 		/**
@@ -90,25 +110,38 @@ var FlxBasic._VISIBLECOUNT;
 		 * like to animate an effect or whatever, you should override this,
 		 * setting only alive to false, and leaving exists true.
 		 */
-		FlxBasic.prototype.kill = function(){
+		    kill: function()
+    {
+
 			alive = false;
 			exists = false;
-		}
+		
+    }
 
 		
 		/**
 		 * Handy function for bringing game objects "back to life". Just sets alive and exists back to true.
 		 * In practice, this function is most often called by <code>FlxObject.reset()</code>.
 		 */
-		FlxBasic.prototype.revive = function(){
+		    revive: function()
+    {
+
 			alive = true;
 			exists = true;
-		}
+		
+    }
 
 		
 		/**
 		 * Convert object to readable string name.  Useful for debugging, save games, etc.
 		 */
-		FlxBasic.prototype.toString = function(){
+		    toString: function()
+    {
+
 			return FlxU.getClassName(this,true);
-		}
+		
+    }
+});
+
+var FlxBasic._ACTIVECOUNT;
+var FlxBasic._VISIBLECOUNT;

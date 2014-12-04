@@ -10,13 +10,19 @@ var FlxBasic = cc.Class.extend(
 
     ctor: function()
     {
-		this.ID = -1;
-		this.exists = true;
-		this.active = true;
-		this.visible = true;
-		this.alive = true;
-		this.ignoreDrawDebug = false;
-	}
+    	this.ID = -1;
+    	this.exists = true;
+    	this.active = true;
+    	this.visible = true;
+    	this.alive = true;
+    	this.ignoreDrawDebug = false;
+    }
+    /**
+     * Override this function to null out variables or manually call
+     * <code>destroy()</code> on class members if necessary.
+     * Don't forget to call <code>super.destroy()</code>!
+     */
+    destroy: function() {}
 });
 var FlxBasic._ACTIVECOUNT;
 var FlxBasic._VISIBLECOUNT;

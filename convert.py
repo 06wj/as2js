@@ -15,18 +15,11 @@ from os.path import getsize, splitext
 
 import convert_cfg as cfg
 
-#                     package   org.pkg   {       class   ClasA    extends   Clas{        }}
-klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\w+\s+)?{([\s\S]+)}\s*}', re.S)
-
 namespace = '(?:private|protected|public|internal)'
-
-prop = 'var\s+(\w+)\s*(:\w+)?\s*(\s*=\s*\w+)?;?'
-
-#                                                     override        private                     function    func    (int a    )      :    int    {         }  
-funcP =  re.compile('(\s+/\*\*[\t\r\n][\s\S]+?\*/\s+)(?:override\s+)?(?:private|protected|public|internal)\s+function\s+(\w+)\s*\([\s\S]*?\)\s*(?::\s*(\w+))?\s*{([\s\S]*?)}', re.S)
+argumentSave = '(\w+)\s*(:\w+)?\s*(\s*=\s*\w+)?'
+prop = 'var\s+' + argumentSave + ';?'
 
 noteP = re.compile('\*\*([\t\r\n][\s\S]+?)\*/', re.S)
-
 
 staticPropP =  re.compile(
     '(?:' + 'static\s+' + namespace 
@@ -54,8 +47,8 @@ def staticProps(klassName, klassContent):
     """
     staticProps = staticPropP.findall(klassContent)
     strs = []
-    for prop in staticProps:
-        line = 'var ' + klassName + '.' + prop[0] + prop[2] + ';'
+    for name, dataType, definition in staticProps:
+        line = 'var ' + klassName + '.' + name + definition + ';'
         strs.append(line)
     return '\n'.join(strs)
 
@@ -89,44 +82,88 @@ def props(klassContent):
     """
     props = propP.findall(klassContent)
     strs = []
-    for prop in props:
-        definition = prop[2]
+    for name, dataType, definition in props:
         if definition:
             definition = definition.replace('=', ':')
         else:
             definition = ': undefined'
-        line = prop[0] + definition
+        line = name + definition
         strs.append(line)
-    indent = '    '
-    separator = ',\n' + indent
+    separator = ',\n' + cfg.indent
     str = separator.join(strs)
     if strs:
-        str = indent + str
+        str = cfg.indent + str
         str += ','
     return str
 
+
+argument = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
+argumentP =  re.compile(argument, re.S)
+
+commentEnd = '*/'
+commentEndEscape = '~'
+commentEndEscapeEscape = 'CommentEndEscape'
+
+comment =  '/\*[^' + commentEndEscape + ']+' + commentEndEscape
+
+#                                                     override        private                     function    func    (int a    )      :    int    {         }  
+funcP =  re.compile('(\s*' + comment
+    + '\s+){0,1}(?:override\s+)?' 
+    + namespace 
+    + '\s+function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([\s\S]*?)}', re.S)
+
+def methods(klassName, klassContent):
+    r"""
+    Ignore member variables.
+    >>> methods('FlxCamera', '/** var */\npublic var ID:int;')
+    ''
+
+    Escapes end comment character with tilde, which is not special to pattern.
+    >>> re.compile(comment, re.S).findall('/** comment ~/** var ~')
+    ['/** comment ~', '/** var ~']
+
+    Arguments.  Does not convert default value.
+    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){x=X}')
+    <BLANKLINE>
+    /* var ~ */
+        ctor: function(X, Y, Width, Height, Zoom=0)
+        {
+    x=X
+        }
+    """
+    escaped = klassContent.replace(commentEndEscape, commentEndEscapeEscape) \
+        .replace(commentEnd, commentEndEscape)
+    funcs = funcP.findall(escaped)
+    str = ''
+    for blockComment, name, argumentText, content in funcs:
+        blockComment = blockComment.replace(commentEndEscape, commentEnd) \
+            .replace(commentEndEscapeEscape, commentEndEscape)
+        arguments = argumentP.findall(argumentText)
+        arguments = [var + definition 
+            for var, dataType, definition in arguments]
+        argumentStr = ', '.join(arguments)
+        if klassName == name:
+            name = 'ctor'
+        str += '\n' + blockComment + cfg.indent + name + ': function(' \
+            + argumentStr \
+            + ')\n' + cfg.indent + '{\n' + content + '\n' + cfg.indent + '}'
+    return str
+
+
+#                     package   org.pkg   {       class   ClasA    extends   Clas{        }}
+klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\w+\s+)?{([\s\S]+)}\s*}', re.S)
 
 def convert(text):
     klass = klassP.findall(text)[0]
     klassName = klass[0]
     klassContent = klass[1]
 
-    funcs = funcP.findall(klassContent)
-
-    for func in funcs:
-        if func[1] == klassName:
-            constructor = func[3]
-            funcs.remove(func)
-
     str = '';
     str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' 
     str += '\n' + props(klassContent) 
-    str += '\n\n    ctor: function()\n    {\n' + constructor + '\n    }\n});'
-
-    str += '\n' + staticProps(klassName, klassContent)
-
-    for func in funcs:
-        str += '\n' + func[0] + klassName + '.prototype.' + func[1] + ' = function(){' + func[3] + '}'
+    str += '\n' + methods(klassName, klassContent)
+    str += '\n});'
+    str += '\n\n' + staticProps(klassName, klassContent)
     return str
 
 
