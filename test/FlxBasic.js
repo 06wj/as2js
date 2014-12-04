@@ -1,11 +1,24 @@
 var FlxBasic = cc.Class.extend({
+    ID: undefined,
+    exists: undefined,
+    active: undefined,
+    visible: undefined,
+    alive: undefined,
+    cameras: undefined,
+    ignoreDrawDebug: undefined,
+
+    ctor: function()
+    {
+
 			ID = -1;
 			exists = true;
 			active = true;
 			visible = true;
 			alive = true;
 			ignoreDrawDebug = false;
-		});
+		
+    }
+});
 var FlxBasic._ACTIVECOUNT;
 var FlxBasic._VISIBLECOUNT;
 

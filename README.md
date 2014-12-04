@@ -25,6 +25,8 @@ Todo
 
  * Constructor assignment.
 
+ * Constructor arguments.
+
  * Specify multiple files.
 
  * Configuration file.

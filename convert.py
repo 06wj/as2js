@@ -20,15 +20,13 @@ klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\
 
 namespace = '(?:private|protected|public|internal)'
 
-prop = 'var\s+(\w+)\s*(:\w+)?\s*(\s*=\s*\w+)?'
-
-#                       private                     var    a       :  int
-propP =  re.compile(namespace + '\s+' + prop, re.S)
+prop = 'var\s+(\w+)\s*(:\w+)?\s*(\s*=\s*\w+)?;?'
 
 #                                                     override        private                     function    func    (int a    )      :    int    {         }  
 funcP =  re.compile('(\s+/\*\*[\t\r\n][\s\S]+?\*/\s+)(?:override\s+)?(?:private|protected|public|internal)\s+function\s+(\w+)\s*\([\s\S]*?\)\s*(?::\s*(\w+))?\s*{([\s\S]*?)}', re.S)
 
 noteP = re.compile('\*\*([\t\r\n][\s\S]+?)\*/', re.S)
+
 
 staticPropP =  re.compile(
     '(?:' + 'static\s+' + namespace 
@@ -36,22 +34,22 @@ staticPropP =  re.compile(
     + '\s+' + prop, re.S)
 
 
-def staticProp(klassName, klassContent):
+def staticProps(klassName, klassContent):
     """
     Declared, defined variable without a space.
-    >>> staticProp('FlxBasic', 'static internal var _VISIBLECOUNT:uint= 5;')
+    >>> staticProps('FlxBasic', 'static internal var _VISIBLECOUNT:uint= 5;')
     'var FlxBasic._VISIBLECOUNT= 5;'
 
     Declared, undefined variable.
-    >>> staticProp('FlxBasic', 'static internal var _ACTIVECOUNT:uint;')
+    >>> staticProps('FlxBasic', 'static internal var _ACTIVECOUNT:uint;')
     'var FlxBasic._ACTIVECOUNT;'
 
     Namespace first
-    >>> staticProp('FlxBasic', 'private static var _VISIBLECOUNT:uint= 5;')
+    >>> staticProps('FlxBasic', 'private static var _VISIBLECOUNT:uint= 5;')
     'var FlxBasic._VISIBLECOUNT= 5;'
 
     Declared, undefined variable.
-    >>> staticProp('FlxBasic', 'public static var _ACTIVECOUNT:uint;')
+    >>> staticProps('FlxBasic', 'public static var _ACTIVECOUNT:uint;')
     'var FlxBasic._ACTIVECOUNT;'
     """
     staticProps = staticPropP.findall(klassContent)
@@ -62,12 +60,57 @@ def staticProp(klassName, klassContent):
     return '\n'.join(strs)
 
 
+#                       private                     var    a       :  int
+
+# http://revxatlarge.blogspot.com/2011/05/regular-expressions-excluding-strings.html
+propP =  re.compile('(?<!static\s)' 
+    + namespace + '\s+' + prop, re.S)
+
+
+def props(klassContent):
+    r"""As object members, indented by 4-spaces, with trailing comma.
+    Undefined.
+    >>> props('  public var ID:int;\n        public var exists:Boolean;')
+    '    ID: undefined,\n    exists: undefined,'
+
+    Defined.
+    >>> props('    public var ID:int = 1;\n    public var exists:Boolean = true;')
+    '    ID: 1,\n    exists: true,'
+
+    Exclude static if exactly one space, because lookbehind only supports fixed-width
+    >>> props('public var _ACTIVECOUNT:uint;')
+    '    _ACTIVECOUNT: undefined,'
+    >>> props('static public var _ACTIVECOUNT:uint;')
+    ''
+    >>> props('public static var _ACTIVECOUNT:uint;')
+    ''
+    >>> props('static  public var _ACTIVECOUNT:uint;')
+    '    _ACTIVECOUNT: undefined,'
+    """
+    props = propP.findall(klassContent)
+    strs = []
+    for prop in props:
+        definition = prop[2]
+        if definition:
+            definition = definition.replace('=', ':')
+        else:
+            definition = ': undefined'
+        line = prop[0] + definition
+        strs.append(line)
+    indent = '    '
+    separator = ',\n' + indent
+    str = separator.join(strs)
+    if strs:
+        str = indent + str
+        str += ','
+    return str
+
+
 def convert(text):
     klass = klassP.findall(text)[0]
     klassName = klass[0]
     klassContent = klass[1]
 
-    props = propP.findall(klassContent)   
     funcs = funcP.findall(klassContent)
 
     for func in funcs:
@@ -76,9 +119,11 @@ def convert(text):
             funcs.remove(func)
 
     str = '';
-    str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' + constructor + '});'
+    str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' 
+    str += '\n' + props(klassContent) 
+    str += '\n\n    ctor: function()\n    {\n' + constructor + '\n    }\n});'
 
-    str += '\n' + staticProp(klassName, klassContent)
+    str += '\n' + staticProps(klassName, klassContent)
 
     for func in funcs:
         str += '\n' + func[0] + klassName + '.prototype.' + func[1] + ' = function(){' + func[3] + '}'
