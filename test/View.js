@@ -169,3 +169,19 @@ var View = cc.Class.extend({
     }
 });
 
+
+
+View.remove = function(child)
+{
+
+            if (null != child && null != child.parent && child.parent.contains(child)) {
+                child.parent.removeChild(child);
+            
+}
+View.removeAll = function(parent)
+{
+
+            for (var c:int = parent.numChildren - 1; 0 <= c; c--) {
+                remove(parent.getChildAt(c));
+            
+}

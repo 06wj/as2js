@@ -24,40 +24,41 @@ Features
 
  * Methods in extend idiom.
 
-Todo
-====
-
  * Static methods.
-
- * Constructor assignment.
-
- * Default values.
-
- * Constructor arguments.
 
  * Specify multiple files.
 
- * Configuration file.
+ * Configuration class to extend.
 
- * Prefix private variables with underscore.
+Todo
+====
 
- * Prefix member variable usage with this.
+ * Default arguments.
 
- * Prefix static variable usage with class name.
-
- * Read text from standard input.
-
- * Return text.
-
- * Intermediate untyped, clarified ActionScript format.
+ * Constructor member variable reassignment.
 
  * Convert import to node.js require.
 
- * Infer member variable or method if not in import.
+ * Prefix private variables with underscore.
+
+ * Prefix member usage with this.
+
+ * Prefix static usage with class name.
+
+ * Intermediate untyped, explicit scope ActionScript format.
+
+ * Vim in-place:  Read text from standard input and return text for use in vim 
+
+    :%!python -m as2js/convert
+
 
 Not supported
 =============
 
+ * Variable or method with undeclared namespace.
+
  * Multiple classes per file.
  
  * Anything else not mentioned in features above.
+
+ * Globals.
