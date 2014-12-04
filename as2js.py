@@ -1,5 +1,3 @@
-# coding:utf-8
-
 """
 Converts some ActionScript3 to a JavaScript file.
 Usage:  python as2js.py actionscriptFile.as [...]
@@ -16,8 +14,14 @@ import re
 import as2js_cfg as cfg
 
 namespace = '(?:private|protected|public|internal)'
-argumentSave = '(\w+)\s*(:\w+)?\s*(\s*=\s*\w+)?'
-prop = 'var\s+' + argumentSave + ';?'
+argumentSave = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
+localVariable = r'\bvar\s+' + argumentSave + ';?'
+
+var = 'var'
+varKeyword = r'\b' + var + r'\b'
+varEscape = '&'
+varEscapeEscape = '<varEscapeEscape>'
+localVariableEscaped = '(' + varEscape + '\s+)' + argumentSave
 notStatic = '(?<!static\s)'
 staticNamespace = '(?:' + 'static\s+' + namespace \
                   + '|' + namespace + '\s+static' + ')'
@@ -25,7 +29,7 @@ staticNamespace = '(?:' + 'static\s+' + namespace \
 noteP = re.compile('\*\*([\t\r\n][\s\S]+?)\*/', re.S)
 
 staticPropP =  re.compile(staticNamespace
-    + '\s+' + prop, re.S)
+    + '\s+' + localVariable, re.S)
 
 
 def staticProps(klassName, klassContent):
@@ -57,11 +61,74 @@ def staticProps(klassName, klassContent):
         strs.append(line)
     return '\n'.join(strs)
 
+
+varKeywordP = re.compile(varKeyword)
+
+def _escape(original):
+    return original \
+        .replace(commentEndEscape, commentEndEscapeEscape) \
+        .replace(commentEnd, commentEndEscape) \
+        .replace(functionEndEscape, functionEndEscapeEscape) \
+        .replace(functionEnd, functionEndEscape)
+
+
+def _unescape(safe):
+    return safe.replace(commentEndEscape, commentEnd) \
+        .replace(commentEndEscapeEscape, commentEndEscape) \
+        .replace(functionEndEscapeEscape, functionEndEscape) \
+        .replace(functionEndEscape, functionEnd)
+
+
+def _escapeLocal(original):
+    r"""
+    >>> _escapeLocal('var ivar:uint = 0;\nvar varj:uint = cameras.length;')
+    '& ivar:uint = 0;\n& varj:uint = cameras.length;'
+    """
+    escaped = original.replace(varEscape, varEscapeEscape)
+    return re.sub(varKeywordP, varEscape, escaped)
+
+
+def _unescapeLocal(safe):
+    return safe.replace(varEscapeEscape, varEscape) \
+        .replace(varEscape, var)
+
+
+localVariableP = re.compile(localVariableEscaped)
+
+def localVariables(funcContent):
+    r"""
+    >>> print localVariables('var i:uint = 0;;')
+    var i = 0;;
+
+    Remove data type from each local variable.
+    >>> print localVariables('var ivar:uint = 0;\nvar varj:uint = cameras.length;')
+    var ivar = 0;
+    var varj = cameras.length;
+    >>> print localVariables('f();\nvar ivar:uint = 0;\ng();')
+    f();
+    var ivar = 0;
+    g();
+    """
+    escaped = _escapeLocal(funcContent)
+    variables = localVariableP.findall(escaped)
+    dataTypes = [dataType
+        for keyword, declaration, dataType, definition in variables]
+    parts = localVariableP.split(escaped)
+    # print parts, dataTypes
+    content = ''
+    for part in parts:
+        if part not in dataTypes:
+            if part:
+                content += part
+    content = _unescapeLocal(content)
+    return content
+
+
 #                       private                     var    a       :  int
 
 # http://revxatlarge.blogspot.com/2011/05/regular-expressions-excluding-strings.html
 propP =  re.compile(notStatic
-    + namespace + '\s+' + prop, re.S)
+    + namespace + '\s+' + localVariable, re.S)
 
 
 def props(klassContent):
@@ -88,7 +155,7 @@ def props(klassContent):
     strs = []
     for name, dataType, definition in props:
         if definition:
-            definition = definition.replace('=', ':')
+            definition = definition.replace(' =', ':').replace('=', ':')
         else:
             definition = ': undefined'
         line = name + definition
@@ -106,17 +173,41 @@ argumentP =  re.compile(argument, re.S)
 
 commentEnd = '*/'
 commentEndEscape = '~'
-commentEndEscapeEscape = 'CommentEndEscape'
+commentEndEscapeEscape = 'commentEndEscapeEscape'
 
 comment =  '/\*[^' + commentEndEscape + ']+' + commentEndEscape
 functionPrefix = '(\s*' + comment + '\s+){0,1}(?:override\s+)?' 
-function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([\s\S]*?)}'
+functionEnd = '}'
+functionEndEscape = '@'
+functionEndEscapeEscape = 'functionEndEscapeEscape'
+function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([\s\S]*?)' + functionEndEscape
+
+
+def _parseFuncs(klassContent, methodP):
+    escaped = _escape(klassContent)
+    funcs = methodP.findall(escaped)
+    formatted = []
+    for blockComment, name, argumentText, content in funcs:
+        blockComment = _unescape(blockComment)
+        arguments = argumentP.findall(argumentText)
+        arguments = [declaration + definition 
+            for declaration, dataType, definition in arguments]
+        argumentFormatted = ', '.join(arguments)
+        if not content or content.isspace():
+            content = ''
+        else:
+            content = '\n' + content
+            content = localVariables(content)
+        formatted.append([blockComment, name, argumentFormatted, content])
+    return formatted
+
 
 #                                                     override        private                     function    func    (int a    )      :    int    {         }  
 methodP =  re.compile(functionPrefix
     + notStatic
     + namespace 
     + '\s+' + function, re.S)
+
 
 def methods(klassName, klassContent):
     r"""
@@ -149,25 +240,22 @@ def methods(klassName, klassContent):
         g: function()
         {
         }
+
+    Local variables.
+    >>> print methods('FlxCamera', 'internal function f(){var i:uint=1}')
+        f: function()
+        {
+    var i=1
+        }
     """
-    escaped = klassContent.replace(commentEndEscape, commentEndEscapeEscape) \
-        .replace(commentEnd, commentEndEscape)
-    funcs = methodP.findall(escaped)
+    funcs = _parseFuncs(klassContent, methodP)
     strs = []
     for blockComment, name, argumentText, content in funcs:
-        blockComment = blockComment.replace(commentEndEscape, commentEnd) \
-            .replace(commentEndEscapeEscape, commentEndEscape)
-        arguments = argumentP.findall(argumentText)
-        arguments = [var + definition 
-            for var, dataType, definition in arguments]
-        argumentStr = ', '.join(arguments)
-        if content.isspace():
-            content = ''
         if klassName == name:
             name = 'ctor'
         str = blockComment + cfg.indent + name + ': function(' \
-            + argumentStr \
-            + ')\n' + cfg.indent + '{\n' + content + '\n' + cfg.indent + '}'
+            + argumentText \
+            + ')\n' + cfg.indent + '{' + content + '\n' + cfg.indent + '}'
         strs.append(str)
     return ',\n\n'.join(strs)
 
@@ -195,22 +283,28 @@ def staticMethods(klassName, klassContent):
     ''
 
     Multiple with 2 lines between.
-    >>> staticMethods('C', 'private static function f(){};')
+    >>> print staticMethods('C', 'private static function f(){}private static function g(){}')
+    C.f = function()
+    {
+    }
+    <BLANKLINE>
+    C.g = function()
+    {
+    }
+
+    Nested local function brackets.
+    >>> print staticMethods('C', 'private static function f(){function g(){}}')
+    C.f = function()
+    {
+    g(){}
+    }
     """ 
-    escaped = klassContent.replace(commentEndEscape, commentEndEscapeEscape) \
-        .replace(commentEnd, commentEndEscape)
-    funcs = staticMethodP.findall(escaped)
+    funcs = _parseFuncs(klassContent, staticMethodP)
     strs = []
     for blockComment, name, argumentText, content in funcs:
-        blockComment = blockComment.replace(commentEndEscape, commentEnd) \
-            .replace(commentEndEscapeEscape, commentEndEscape)
-        arguments = argumentP.findall(argumentText)
-        arguments = [var + definition 
-            for var, dataType, definition in arguments]
-        argumentStr = ', '.join(arguments)
         str = blockComment + klassName + '.' + name + ' = function(' \
-            + argumentStr \
-            + ')\n{\n' + content + '\n}'
+            + argumentText \
+            + ')\n{' + content + '\n}'
         strs.append(str)
     return '\n\n'.join(strs)
 

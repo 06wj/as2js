@@ -30,8 +30,12 @@ Features
 
  * Configuration class to extend.
 
+ * Remove data type from each local variable.
+
 Todo
 ====
+
+ * Nested brackets or deprecate statics.
 
  * Default arguments.
 
@@ -39,11 +43,18 @@ Todo
 
  * Convert import to node.js require.
 
- * Prefix private variables with underscore.
+ * Standardize whitespace.
 
- * Prefix member usage with this.
+Not supported
+=============
 
- * Prefix static usage with class name.
+ * Apply Math.floor to float converted to an int or uint.
+
+ * Auto prefix private variables with underscore.
+
+ * Auto prefix member usage with this.
+
+ * Auto prefix static usage with class name.
 
  * Intermediate untyped, explicit scope ActionScript format.
 
@@ -51,14 +62,12 @@ Todo
 
     :%!python -m as2js/convert
 
-
-Not supported
-=============
-
  * Variable or method with undeclared namespace.
 
  * Multiple classes per file.
  
- * Anything else not mentioned in features above.
+ * Nonalphanumeric variable and function characters like '$'.
 
  * Globals.
+
+ * Anything else not mentioned in features above.
