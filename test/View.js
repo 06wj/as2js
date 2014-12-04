@@ -29,7 +29,8 @@ var View = cc.Class.extend({
             filterCorrect = new FilterCorrect().getChildAt(0).filters[0];
             filterWrong = new FilterWrong().getChildAt(0).filters[0];
         
-    }
+    },
+
 
 
         /**
@@ -52,7 +53,8 @@ var View = cc.Class.extend({
                         if (1 <= r) {
                             child.visible = false;
                         
-    }
+    },
+
     getProperty: function(items, prop)
     {
 
@@ -60,7 +62,8 @@ var View = cc.Class.extend({
             for (var i:int = 0; i < items.length; i++) {
                 props.push(items[i][prop]);
             
-    }
+    },
+
 
 
         /**
@@ -76,14 +79,16 @@ var View = cc.Class.extend({
             if (debugHit) {
                 trace("View.indexOf: " + hits);
             
-    }
+    },
+
     end: function()
     {
 
             backgroundClip.gotoAndPlay("end");
             screen.addFrameScript(screen.totalFrames - 1, screen.stop);
         
-    }
+    },
+
     hideScreen: function()
     {
 
@@ -92,7 +97,8 @@ var View = cc.Class.extend({
                 remove(reviewClip);
                 reviewClip.visible = false;
             
-    }
+    },
+
     populate: function(model)
     {
 
@@ -101,7 +107,8 @@ var View = cc.Class.extend({
                 for (var c:int = 0; c < rounds[r].length; c++) {
                     rounds[r][c].filters = [];
                 
-    }
+    },
+
     review: function()
     {
 
@@ -117,14 +124,16 @@ var View = cc.Class.extend({
             reviewClip.count.mouseEnabled = false;
             reviewClip.minutes.mouseEnabled = false;
         
-    }
+    },
+
     win: function()
     {
 
             if ("trial" != backgroundClip.currentLabel) {
                 backgroundClip.gotoAndPlay("trial");
             
-    }
+    },
+
     feedback: function(targetIndex, correct)
     {
 
@@ -137,12 +146,13 @@ var View = cc.Class.extend({
             target.filters = correct ? [filterCorrect.clone()]
                                         : [filterWrong.clone()];
         
-    }
+    },
+
     cancel: function()
     {
 
-        
-    }
+    },
+
     trialEnd: function()
     {
 
@@ -150,13 +160,15 @@ var View = cc.Class.extend({
             if ("end" != screen.currentLabel) {
                 screen.gotoAndPlay("end");
             
-    }
+    },
+
     clear: function()
     {
 
             cancel();
         
-    }
+    },
+
     restart: function()
     {
 
@@ -178,6 +190,7 @@ View.remove = function(child)
                 child.parent.removeChild(child);
             
 }
+
 View.removeAll = function(parent)
 {
 

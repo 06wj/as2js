@@ -2,9 +2,9 @@
 
 """
 Converts some ActionScript3 to a JavaScript file.
-Usage:  python convert.py actionscriptFile.as [...]
+Usage:  python as2js.py actionscriptFile.as [...]
 Overwrites each .js file parallel to each .as file.
-Usage:  python convert.py --test
+Usage:  python as2js.py --test
 Just run unit tests.
 Forked from 06\_jw as2js by Ethan Kennerly.
 """
@@ -13,7 +13,7 @@ import codecs
 import os
 import re
 
-import convert_cfg as cfg
+import as2js_cfg as cfg
 
 namespace = '(?:private|protected|public|internal)'
 argumentSave = '(\w+)\s*(:\w+)?\s*(\s*=\s*\w+)?'
@@ -130,7 +130,6 @@ def methods(klassName, klassContent):
 
     Arguments.  Does not convert default value.
     >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){x=X}')
-    <BLANKLINE>
     /* var ~ */
         ctor: function(X, Y, Width, Height, Zoom=0)
         {
@@ -138,13 +137,23 @@ def methods(klassName, klassContent):
         }
 
     Ignore static functions.
-    >>> methods('FlxCamera', '/** var */\nstatic public function f(){};')
+    >>> methods('FlxCamera', '/** var */\nstatic public function f(){}')
     ''
+
+    Comma-separate.
+    >>> print methods('FlxCamera', 'internal function f(){}internal function g(){}')
+        f: function()
+        {
+        },
+    <BLANKLINE>
+        g: function()
+        {
+        }
     """
     escaped = klassContent.replace(commentEndEscape, commentEndEscapeEscape) \
         .replace(commentEnd, commentEndEscape)
     funcs = methodP.findall(escaped)
-    str = ''
+    strs = []
     for blockComment, name, argumentText, content in funcs:
         blockComment = blockComment.replace(commentEndEscape, commentEnd) \
             .replace(commentEndEscapeEscape, commentEndEscape)
@@ -152,12 +161,15 @@ def methods(klassName, klassContent):
         arguments = [var + definition 
             for var, dataType, definition in arguments]
         argumentStr = ', '.join(arguments)
+        if content.isspace():
+            content = ''
         if klassName == name:
             name = 'ctor'
-        str += '\n' + blockComment + cfg.indent + name + ': function(' \
+        str = blockComment + cfg.indent + name + ': function(' \
             + argumentStr \
             + ')\n' + cfg.indent + '{\n' + content + '\n' + cfg.indent + '}'
-    return str
+        strs.append(str)
+    return ',\n\n'.join(strs)
 
 
 staticMethodP =  re.compile(functionPrefix
@@ -172,7 +184,6 @@ def staticMethods(klassName, klassContent):
 
     Arguments.  Does not convert default value.
     >>> print staticMethods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){x=X}')
-    <BLANKLINE>
     /* var ~ */
     FlxCamera.create = function(X, Y, Width, Height, Zoom=0)
     {
@@ -182,11 +193,14 @@ def staticMethods(klassName, klassContent):
     Ignore methods.
     >>> staticMethods('FlxCamera', '/** var */\npublic function f(){};')
     ''
-    """
+
+    Multiple with 2 lines between.
+    >>> staticMethods('C', 'private static function f(){};')
+    """ 
     escaped = klassContent.replace(commentEndEscape, commentEndEscapeEscape) \
         .replace(commentEnd, commentEndEscape)
     funcs = staticMethodP.findall(escaped)
-    str = ''
+    strs = []
     for blockComment, name, argumentText, content in funcs:
         blockComment = blockComment.replace(commentEndEscape, commentEnd) \
             .replace(commentEndEscapeEscape, commentEndEscape)
@@ -194,10 +208,11 @@ def staticMethods(klassName, klassContent):
         arguments = [var + definition 
             for var, dataType, definition in arguments]
         argumentStr = ', '.join(arguments)
-        str += '\n' + blockComment + klassName + '.' + name + ' = function(' \
+        str = blockComment + klassName + '.' + name + ' = function(' \
             + argumentStr \
             + ')\n{\n' + content + '\n}'
-    return str
+        strs.append(str)
+    return '\n\n'.join(strs)
 
 #                     package   org.pkg   {       class   ClasA    extends   Clas{        }}
 klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\w+\s+)?{([\s\S]+)}\s*}', re.S)
@@ -210,10 +225,10 @@ def convert(text):
     str = '';
     str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' 
     str += '\n' + props(klassContent) 
-    str += '\n' + methods(klassName, klassContent)
+    str += '\n\n' + methods(klassName, klassContent)
     str += '\n});'
     str += '\n\n' + staticProps(klassName, klassContent)
-    str += '\n' + staticMethods(klassName, klassContent)
+    str += '\n\n' + staticMethods(klassName, klassContent)
     return str
 
 
