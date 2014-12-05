@@ -38,6 +38,8 @@ Features
 
  * Default arguments.
 
+ * Constants.
+
 Todo
 ====
 
@@ -53,7 +55,6 @@ Todo
 
  * Class comment.
 
- * Constants.
 
 
 Not supported

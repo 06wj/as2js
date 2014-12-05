@@ -539,5 +539,12 @@ var FlxCamera = cc.Class.extend({
     }
 });
 
+var FlxCamera.STYLE_LOCKON = 0;
+var FlxCamera.STYLE_PLATFORMER = 1;
+var FlxCamera.STYLE_TOPDOWN = 2;
+var FlxCamera.STYLE_TOPDOWN_TIGHT = 3;
+var FlxCamera.SHAKE_BOTH_AXES = 0;
+var FlxCamera.SHAKE_HORIZONTAL_ONLY = 1;
+var FlxCamera.SHAKE_VERTICAL_ONLY = 2;
 var FlxCamera.defaultZoom;
 

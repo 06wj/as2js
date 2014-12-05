@@ -17,12 +17,12 @@ import as2js_cfg as cfg
 
 namespace = '(?:private|protected|public|internal)'
 argumentSave = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
-localVariable = r'\bvar\s+' + argumentSave + ';?'
 
 var = 'var'
-varKeyword = r'\b' + var + r'\b'
+varKeyword = r'(?:\bvar\b|\bconst\b)'
 varEscape = '&'
 varEscapeEscape = '<varEscapeEscape>'
+localVariable = varKeyword + '\s+' + argumentSave + ';?'
 localVariableEscaped = '(' + varEscape + '\s+)' + argumentSave
 notStatic = '(?<!static\s)'
 staticNamespace = '(?:' + 'static\s+' + namespace \
@@ -55,6 +55,10 @@ def staticProps(klassName, klassContent):
     No namespace not supported.
     >>> staticProps('FlxBasic', 'static var _ACTIVECOUNT:uint;')
     ''
+
+    Constant.
+    >>> staticProps('FlxBasic', 'public static const ACTIVECOUNT:uint;')
+    'var FlxBasic.ACTIVECOUNT;'
     """
     staticProps = staticPropP.findall(klassContent)
     strs = []
