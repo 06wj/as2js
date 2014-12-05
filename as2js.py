@@ -62,22 +62,54 @@ def staticProps(klassName, klassContent):
     return '\n'.join(strs)
 
 
-varKeywordP = re.compile(varKeyword)
+def _escapeFunctionEnd(klassContent):
+    """
+    Escape end of outermost scope function.
+    This makes a regular expression simple search until next character.
+    Stack each open bracket and escape 0th stack closing bracket.
+    >>> _escapeFunctionEnd('private static function f(){function g(){}}')
+    'private static function f(){function g(){}@'
 
-def _escape(original):
-    return original \
+    Escape escape the raw escape character.
+    >>> _escapeFunctionEnd('private static function f(@){function g(){}}')
+    'private static function f(functionEndEscapeEscape){function g(){}@'
+
+    Assumes matching parentheses.
+    >>> _escapeFunctionEnd('}{function g(){}}')
+    '}{function g(){@}'
+    """
+    escaped = klassContent.replace(functionEndEscape, functionEndEscapeEscape)
+    characters = []
+    characters += escaped
+    blockBegin = '{'
+    depth = 0
+    for c, character in enumerate(characters):
+        if blockBegin == character:
+            depth += 1
+        elif functionEnd == character:
+            depth -= 1
+            if 0 == depth:
+                characters[c] = functionEndEscape
+    return ''.join(characters)
+
+
+def _escapeEnds(original):
+    """Comment, function end."""
+    commentEscaped = original \
         .replace(commentEndEscape, commentEndEscapeEscape) \
-        .replace(commentEnd, commentEndEscape) \
-        .replace(functionEndEscape, functionEndEscapeEscape) \
-        .replace(functionEnd, functionEndEscape)
+        .replace(commentEnd, commentEndEscape)
+    return _escapeFunctionEnd(commentEscaped)
 
 
-def _unescape(safe):
+def _unescapeEnds(safe):
+    """Comment, function end."""
     return safe.replace(commentEndEscape, commentEnd) \
         .replace(commentEndEscapeEscape, commentEndEscape) \
         .replace(functionEndEscapeEscape, functionEndEscape) \
         .replace(functionEndEscape, functionEnd)
 
+
+varKeywordP = re.compile(varKeyword)
 
 def _escapeLocal(original):
     r"""
@@ -180,15 +212,15 @@ functionPrefix = '(\s*' + comment + '\s+){0,1}(?:override\s+)?'
 functionEnd = '}'
 functionEndEscape = '@'
 functionEndEscapeEscape = 'functionEndEscapeEscape'
-function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([\s\S]*?)' + functionEndEscape
+function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([^' + functionEndEscape + ']*?)' + functionEndEscape
 
 
 def _parseFuncs(klassContent, methodP):
-    escaped = _escape(klassContent)
+    escaped = _escapeEnds(klassContent)
     funcs = methodP.findall(escaped)
     formatted = []
     for blockComment, name, argumentText, content in funcs:
-        blockComment = _unescape(blockComment)
+        blockComment = _unescapeEnds(blockComment)
         arguments = argumentP.findall(argumentText)
         arguments = [declaration + definition 
             for declaration, dataType, definition in arguments]
@@ -296,7 +328,7 @@ def staticMethods(klassName, klassContent):
     >>> print staticMethods('C', 'private static function f(){function g(){}}')
     C.f = function()
     {
-    g(){}
+    function g(){}
     }
     """ 
     funcs = _parseFuncs(klassContent, staticMethodP)

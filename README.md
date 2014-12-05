@@ -32,10 +32,12 @@ Features
 
  * Remove data type from each local variable.
 
+ * Nested brackets.
+
 Todo
 ====
 
- * Nested brackets or deprecate statics.
+ * Dedent methods.
 
  * Default arguments.
 
@@ -43,7 +45,6 @@ Todo
 
  * Convert import to node.js require.
 
- * Standardize whitespace.
 
 Not supported
 =============
