@@ -61,20 +61,15 @@ Features
 
  * Auto prefix static access with class name.
 
-
-Todo
-====
-
- * Intermediate untyped, explicit scope ActionScript format.
-
- * Preserve class comment.
-
- * Preserve variable comment.
-
+ * Reformat AS3 to untyped, explicit scope to test.
 
 
 Not supported
 =============
+
+ * Preserve variable comment.
+
+ * Preserve class comment.
 
  * Reformat super to this.\_super.
 
@@ -96,5 +91,7 @@ Not supported
  * Nonalphanumeric variable and function characters like '$'.
 
  * Globals.
+
+ * Preprocessor directives such as "include".
 
  * Anything else not mentioned in features above.
