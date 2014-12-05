@@ -55,6 +55,8 @@ Todo
 
  * Class comment.
 
+ * Variable comment.
+
 
 
 Not supported
@@ -71,6 +73,8 @@ Not supported
  * Variable or method with undeclared namespace.
 
  * Multiple classes per file.
+
+ * Classes without functions.
  
  * Nonalphanumeric variable and function characters like '$'.
 

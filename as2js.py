@@ -172,7 +172,7 @@ propP =  re.compile(notStatic
     + namespace + '\s+' + localVariable, re.S)
 
 
-def props(klassContent):
+def props(klassContent, inConstructor = False):
     r"""As object members, indented by 4-spaces, with trailing comma.
     Undefined.
     >>> props('  public var ID:int;\n        public var exists:Boolean;')
@@ -191,21 +191,37 @@ def props(klassContent):
     ''
     >>> props('static  public var _ACTIVECOUNT:uint;')
     '    _ACTIVECOUNT: undefined,'
+
+    Exclude undefined, indented twice.
+    >>> props('public var ID:int = 1;\npublic var exists:Boolean;',
+    ...     inConstructor = True)
+    '        ID = 1;'
     """
     props = propP.findall(klassContent)
     strs = []
     for name, dataType, definition in props:
         if definition:
-            definition = definition.replace(' =', ':').replace('=', ':')
+            if not inConstructor:
+                definition = definition.replace(' =', ':').replace('=', ':')
+            include = True
         else:
             definition = ': undefined'
+            include = False
         line = name + definition
-        strs.append(line)
-    separator = ',\n' + cfg.indent
-    str = separator.join(strs)
+        if not inConstructor or include:
+            strs.append(line)
+    str = ''
+    if inConstructor:
+        indents = 2
+        separator = ';'
+    else:
+        indents = 1
+        separator = ','
     if strs:
-        str = cfg.indent + str
-        str += ','
+        lineSeparator = separator + '\n'
+        str = lineSeparator.join(strs)
+        str = indent(str, indents)
+        str += separator
     return str
 
 
@@ -261,8 +277,8 @@ def _parseFuncs(klassContent, methodP):
     return formatted
 
 
-def indent(text, tabs=1):
-    r"""Standardize indent to a number of tabs.
+def indent(text, indents=1):
+    r"""Standardize indent to a number of indents.
     >>> print indent('             ab\n                 c', 1)
         ab
             c
@@ -280,7 +296,7 @@ def indent(text, tabs=1):
     lines = []
     for line in text.splitlines():
         if line:
-            space = cfg.indent * tabs
+            space = cfg.indent * indents
         else:
             space = ''
         lines.append(space + line)
@@ -312,7 +328,7 @@ def methods(klassName, klassContent):
     >>> re.compile(comment, re.S).findall('/** comment ~/** var ~')
     ['/** comment ~', '/** var ~']
 
-    Arguments.  Does not convert default value.
+    Arguments.  Convert default value.
     >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
         /* var ~ */
         ctor: function(X, Y, Width, Height, Zoom)
@@ -342,6 +358,18 @@ def methods(klassName, klassContent):
         f: function()
         {
             var i=1
+        }
+
+    Explicitly include defaults into constructor.
+    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int = 0;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
+        /* var ~ */
+        ctor: function(X, Y, Width, Height, Zoom)
+        {
+            ID = 0;
+            if (undefined === Zoom) {
+                Zoom=0;
+            }
+            x=X
         }
     """
     funcs = _parseFuncs(klassContent, methodP)
@@ -446,6 +474,8 @@ if '__main__' == __name__:
         print __doc__
     if 2 <= len(sys.argv) and '--test' != sys.argv[1]:
         convertFiles(sys.argv[1:])
+    # Tests expect indent 4-spaces.
+    cfg.indent = '    '
     import doctest
     doctest.testmod()
 
