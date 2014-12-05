@@ -45,6 +45,12 @@ Todo
 
  * Convert import to node.js require.
 
+ * Auto prefix member usage with this.
+
+ * Auto prefix static usage with class name.
+
+ * Intermediate untyped, explicit scope ActionScript format.
+
 
 Not supported
 =============
@@ -52,12 +58,6 @@ Not supported
  * Apply Math.floor to float converted to an int or uint.
 
  * Auto prefix private variables with underscore.
-
- * Auto prefix member usage with this.
-
- * Auto prefix static usage with class name.
-
- * Intermediate untyped, explicit scope ActionScript format.
 
  * Vim in-place:  Read text from standard input and return text for use in vim 
 

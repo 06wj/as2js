@@ -2,9 +2,9 @@
 """
 Converts some ActionScript3 to a JavaScript file.
 Usage:  python as2js.py actionscriptFile.as [...]
-Overwrites each .js file parallel to each .as file.
+    Overwrites each .js file parallel to each .as file.
 Usage:  python as2js.py --test
-Just run unit tests.
+    Just run unit tests.
 Forked from 06\_jw as2js by Ethan Kennerly.
 """
 
@@ -224,19 +224,30 @@ def _parseFuncs(klassContent, methodP):
     escaped = _escapeEnds(klassContent)
     funcs = methodP.findall(escaped)
     formatted = []
-    for blockComment, name, argumentText, content in funcs:
+    for blockComment, name, argumentAS, content in funcs:
         if blockComment:
             blockComment = _unescapeEnds(blockComment)
             blockComment += '\n'
-        arguments = argumentP.findall(argumentText)
+        arguments = argumentP.findall(argumentAS)
         arguments = [declaration + definition 
             for declaration, dataType, definition in arguments]
-        argumentFormatted = ', '.join(arguments)
+        argumentText = ', '.join(arguments)
+        defaultArguments = ''
         if not content or content.isspace():
             content = ''
         else:
             content = localVariables(content)
-        formatted.append([blockComment, name, argumentFormatted, content])
+        blockComment = indent(blockComment, 0)
+        content = indent(content, 1)
+        name = indent(name, 0)
+        if defaultArguments:
+            defaultArguments = indent(defaultArguments, 1) + '\n'
+        content = defaultArguments + content
+        formatted.append({'blockComment': blockComment, 
+            'name': name, 
+            'argumentText': argumentText, 
+            'content': content, 
+            'defaultArguments': defaultArguments})
     return formatted
 
 
@@ -266,6 +277,14 @@ def indent(text, tabs=1):
     text = '\n'.join(lines)
     return text
 
+
+def _formatFunc(func, operator):
+    return func['blockComment'] + func['name'] + operator + 'function(' \
+        + func['argumentText'] \
+        + ')\n{' \
+        + func['content'] + '\n}'
+
+
 #                                                     override        private                     function    func    (int a    )      :    int    {         }  
 methodP =  re.compile(functionPrefix
     + notStatic
@@ -286,8 +305,11 @@ def methods(klassName, klassContent):
     Arguments.  Does not convert default value.
     >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
         /* var ~ */
-        ctor: function(X, Y, Width, Height, Zoom=0)
+        ctor: function(X, Y, Width, Height, Zoom)
         {
+            if (undefined === Zoom) {
+                Zoom=0;
+            }
             x=X
         }
 
@@ -314,15 +336,11 @@ def methods(klassName, klassContent):
     """
     funcs = _parseFuncs(klassContent, methodP)
     strs = []
-    for blockComment, name, argumentText, content in funcs:
-        blockComment = indent(blockComment, 1)
-        if klassName == name:
-            name = 'ctor'
-        name = indent(name, 1)
-        content = indent(content, 2)
-        str = blockComment + name + ': function(' \
-            + argumentText \
-            + ')\n' + cfg.indent + '{' + content + '\n' + cfg.indent + '}'
+    for func in funcs:
+        if klassName == func['name']:
+            func['name'] = 'ctor'
+        str = _formatFunc(func, ': ')
+        str = indent(str, 1)
         strs.append(str)
     return ',\n\n'.join(strs)
 
@@ -340,8 +358,11 @@ def staticMethods(klassName, klassContent):
     Arguments.  Does not convert default value.
     >>> print staticMethods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
     /* var ~ */
-    FlxCamera.create = function(X, Y, Width, Height, Zoom=0)
+    FlxCamera.create = function(X, Y, Width, Height, Zoom)
     {
+        if (undefined === Zoom) {
+            Zoom=0;
+        }
         x=X
     }
 
@@ -368,15 +389,11 @@ def staticMethods(klassName, klassContent):
     """ 
     funcs = _parseFuncs(klassContent, staticMethodP)
     strs = []
-    for blockComment, name, argumentText, content in funcs:
-        blockComment = indent(blockComment, 0)
-        content = indent(content, 1)
-        name = indent(name, 0)
-        str = blockComment + klassName + '.' + name + ' = function(' \
-            + argumentText \
-            + ')\n{' + content + '\n}'
+    for func in funcs:
+        str = klassName + '.' + _formatFunc(func, ' = ')
         strs.append(str)
     return '\n\n'.join(strs)
+
 
 #                     package   org.pkg   {       class   ClasA    extends   Clas{        }}
 klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\w+\s+)?{([\s\S]+)}\s*}', re.S)
