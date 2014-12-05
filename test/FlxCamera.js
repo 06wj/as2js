@@ -77,7 +77,7 @@ var FlxCamera = cc.Class.extend({
         this._flashBitmap.x = -width*0.5;
         this._flashBitmap.y = -height*0.5;
         this._flashSprite = new Sprite();
-        zoom = Zoom; //sets the scale of flash sprite, which in turn loads flashoffset values
+        zoom = Zoom; //sets the scale of this.flash sprite, which in turn loads flashoffset values
         this._flashOffsetX = this.width*0.5*zoom;
         this._flashOffsetY = this.height*0.5*zoom;
         this._flashSprite.x = this.x + this._flashOffsetX;
@@ -136,12 +136,12 @@ var FlxCamera = cc.Class.extend({
      */
     update: function()
     {
-        //Either follow the object closely, 
-        //or doublecheck our this.deadzone and update accordingly.
+        //Either this.follow the object closely, 
+        //or doublecheck our this.deadzone and this.update accordingly.
         if(target != null)
         {
         	if(deadzone == null)
-        		focusOn(target.getMidpoint(_point));
+        		this.focusOn(target.getMidpoint(_point));
         	else
         	{
         		var edge;
@@ -301,7 +301,7 @@ var FlxCamera = cc.Class.extend({
         this.bounds.make(X,Y,Width,Height);
         if(UpdateWorld)
         	FlxG.worldBounds.copyFrom(bounds);
-        update();
+        this.update();
     },
 
 
@@ -528,14 +528,14 @@ var FlxCamera = cc.Class.extend({
         if(_fxFlashAlpha > 0.0)
         {
         	alphaComponent = this._fxFlashColor>>24;
-        	fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFlashAlpha)<<24)+(_fxFlashColor&0x00ffffff));
+        	this.fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFlashAlpha)<<24)+(_fxFlashColor&0x00ffffff));
         }
 
         //Draw the "fade" special effect onto the this.buffer
         if(_fxFadeAlpha > 0.0)
         {
         	alphaComponent = this._fxFadeColor>>24;
-        	fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFadeAlpha)<<24)+(_fxFadeColor&0x00ffffff));
+        	this.fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFadeAlpha)<<24)+(_fxFadeColor&0x00ffffff));
         }
 
         if((_fxShakeOffset.x != 0) || (_fxShakeOffset.y != 0))

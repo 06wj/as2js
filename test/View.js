@@ -30,7 +30,7 @@ var View = cc.Class.extend({
         this.screen = null;
         this.feedbackClip = new FeedbackClip();
         this.screen = new Screen();
-        this.rounds = parseRounds();
+        this.rounds = this.parseRounds();
         this.backgroundClip = new BackgroundClip();
         parent.addChild(backgroundClip);
         this.backgroundClip.gotoAndPlay("begin");
@@ -74,8 +74,8 @@ var View = cc.Class.extend({
             rounds[r].sortOn("name");
             if (1 <= r) {
                 if (rounds[r].length != rounds[0].length) {
-                    var names0 = getProperty(rounds[0], "name")
-                    var namesR = getProperty(rounds[r], "name")
+                    var names0 = this.getProperty(rounds[0], "name")
+                    var namesR = this.getProperty(rounds[r], "name")
                     throw new Error("Expected same number of items in each round.");
                 }
                 for (c = 0; c < rounds[r].length; c++) {
@@ -251,7 +251,7 @@ var View = cc.Class.extend({
 
     trialEnd: function()
     {
-        cancel();
+        this.cancel();
         if ("end" != this.screen.currentLabel) {
             this.screen.gotoAndPlay("end");
         }
@@ -259,13 +259,13 @@ var View = cc.Class.extend({
 
     clear: function()
     {
-        cancel();
+        this.cancel();
     },
 
     restart: function()
     {
-        hideScreen();
-        clear();
+        this.hideScreen();
+        this.clear();
         this.backgroundClip.stop();
         this.screen.stop();
         remove(backgroundClip);
@@ -284,6 +284,6 @@ View.remove = function(child)
 View.removeAll = function(parent)
 {
     for (var c = parent.numChildren - 1; 0 <= c; c--) {
-        remove(parent.getChildAt(c));
+        View.remove(parent.getChildAt(c));
     }
 }

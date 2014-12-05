@@ -80,7 +80,7 @@ var FlxBasic = cc.Class.extend({
         	camera = this.cameras[i++];
         	_VISIBLECOUNT++;
         	if(FlxG.visualDebug && !ignoreDrawDebug)
-        		drawDebug(camera);
+        		this.drawDebug(camera);
         }
     },
 

@@ -322,7 +322,7 @@ def _formatFunc(func, operator):
         + func['content'] + '\n}'
 
 
-def _findDeclarations(klassContent):
+def _findDeclarations(klassContent, propP):
     props = propP.findall(klassContent)
     declarations = []
     for declaration, dataType, definition in props:
@@ -352,13 +352,18 @@ def exclude(list, exclusions):
 
 identifierP = re.compile(r'\s+(\w+)\b')
 
-def scopeMembers(memberDeclarations, funcContent):
+def scopeMembers(memberDeclarations, funcContent, scope):
     r"""
-    >>> print scopeMembers(['x', 'y', 'f'], 'var x:int = 0;\nx += y;\nf();\nfunction g(){}; g()')
+    >>> print scopeMembers(['x', 'y', 'f'], 'var x:int = 0;\nx += y;\nf();\nfunction g(){}; g()', 'this')
     var x:int = 0;
     x += this.y;
     this.f();
     function g(){}; g()
+
+    Include comments.
+    >>> print scopeMembers(['x', 'y', 'f'], 'var x:int = 0;\n//x += y;', 'FlxCamera')
+    var x:int = 0;
+    //x += FlxCamera.y;
     """
     scoped = funcContent
     localDeclarations = _findLocalDeclarations(funcContent)
@@ -369,7 +374,7 @@ def scopeMembers(memberDeclarations, funcContent):
             if identifier in memberDeclarations]
     for identifier in memberIdentifiers:
         memberIdentifierP = re.compile(r'(\s+)(%s)\b' % identifier)
-        scoped = re.sub(memberIdentifierP, r'\1this.\2', scoped)
+        scoped = re.sub(memberIdentifierP, r'\1%s.\2' % scope, scoped)
     return scoped
 
 
@@ -436,8 +441,9 @@ def methods(klassName, klassContent):
             this.f()
         }
     """
-    declarations = _findDeclarations(klassContent)
     funcs = _parseFuncs(klassContent, methodP)
+    functionNames = [func['name'] for func in funcs]
+    declarations = _findDeclarations(klassContent, propP) + functionNames
     strs = []
     for func in funcs:
         if klassName == func['name']:
@@ -445,8 +451,7 @@ def methods(klassName, klassContent):
             defaults = props(klassContent, True)
             if defaults:
                 func['content'] = '\n' + defaults + func['content']
-        func['content'] = scopeMembers(declarations, func['content'])
-
+        func['content'] = scopeMembers(declarations, func['content'], 'this')
         str = _formatFunc(func, ': ')
         str = indent(str, 1)
         strs.append(str)
@@ -464,14 +469,19 @@ def staticMethods(klassName, klassContent):
     ''
 
     Arguments.  Does not convert default value.
-    >>> print staticMethods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
+    >>> print staticMethods('FlxCamera', '/** comment */\npublic static var x:int;private static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nf();\nx=X}')
+    FlxCamera.f = function()
+    {
+    }
+    <BLANKLINE>
     /* var ~ */
     FlxCamera.create = function(X, Y, Width, Height, Zoom)
     {
         if (undefined === Zoom) {
             Zoom=0;
         }
-        x=X
+        FlxCamera.f();
+        FlxCamera.x=X
     }
 
     Ignore methods.
@@ -496,9 +506,12 @@ def staticMethods(klassName, klassContent):
     }
     """ 
     funcs = _parseFuncs(klassContent, staticMethodP)
+    functionNames = [func['name'] for func in funcs]
+    declarations = _findDeclarations(klassContent, staticPropP) + functionNames
     strs = []
     for func in funcs:
         func['name'] = klassName + '.' + func['name']
+        func['content'] = scopeMembers(declarations, func['content'], klassName)
         str = _formatFunc(func, ' = ')
         strs.append(str)
     return '\n\n'.join(strs)

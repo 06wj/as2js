@@ -1,9 +1,22 @@
 as2js
 =====
 
-Converts ActionScript3 to JavaScript.
+Reformat ActionScript 3 class files to JavaScript.
 
 Forked from 06\_jw as2js by Ethan Kennerly.
+
+
+Usage
+=====
+
+* Manually conform ActionScript to JavaScript by each item in not supported.
+
+* Reformat:
+
+    python as2js.py file.as
+
+* Manually conform JavaScript requires and libraries.
+
 
 Features
 ========
@@ -46,21 +59,24 @@ Features
 
  * Auto prefix member access with this.
 
+ * Auto prefix static access with class name.
+
+
 Todo
 ====
 
- * Auto prefix static usage with class name.
-
  * Intermediate untyped, explicit scope ActionScript format.
 
- * Class comment.
+ * Preserve class comment.
 
- * Variable comment.
+ * Preserve variable comment.
 
 
 
 Not supported
 =============
+
+ * Reformat super to this.\_super.
 
  * Apply Math.floor to float converted to an int or uint.
 
