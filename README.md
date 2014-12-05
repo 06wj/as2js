@@ -34,10 +34,10 @@ Features
 
  * Nested brackets.
 
+ * Dedent methods.
+
 Todo
 ====
-
- * Dedent methods.
 
  * Default arguments.
 

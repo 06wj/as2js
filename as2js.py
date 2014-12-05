@@ -1,3 +1,4 @@
+#coding: utf-8
 """
 Converts some ActionScript3 to a JavaScript file.
 Usage:  python as2js.py actionscriptFile.as [...]
@@ -10,6 +11,7 @@ Forked from 06\_jw as2js by Ethan Kennerly.
 import codecs
 import os
 import re
+import textwrap
 
 import as2js_cfg as cfg
 
@@ -102,11 +104,14 @@ def _escapeEnds(original):
 
 
 def _unescapeEnds(safe):
-    """Comment, function end."""
+    """Comment, function end.
+    >>> _unescapeEnds('functionEndEscapeEscape{@')
+    '@{}'
+    """
     return safe.replace(commentEndEscape, commentEnd) \
         .replace(commentEndEscapeEscape, commentEndEscape) \
-        .replace(functionEndEscapeEscape, functionEndEscape) \
-        .replace(functionEndEscape, functionEnd)
+        .replace(functionEndEscape, functionEnd) \
+        .replace(functionEndEscapeEscape, functionEndEscape)
 
 
 varKeywordP = re.compile(varKeyword)
@@ -220,7 +225,9 @@ def _parseFuncs(klassContent, methodP):
     funcs = methodP.findall(escaped)
     formatted = []
     for blockComment, name, argumentText, content in funcs:
-        blockComment = _unescapeEnds(blockComment)
+        if blockComment:
+            blockComment = _unescapeEnds(blockComment)
+            blockComment += '\n'
         arguments = argumentP.findall(argumentText)
         arguments = [declaration + definition 
             for declaration, dataType, definition in arguments]
@@ -228,11 +235,36 @@ def _parseFuncs(klassContent, methodP):
         if not content or content.isspace():
             content = ''
         else:
-            content = '\n' + content
             content = localVariables(content)
         formatted.append([blockComment, name, argumentFormatted, content])
     return formatted
 
+
+def indent(text, tabs=1):
+    r"""Standardize indent to a number of tabs.
+    >>> print indent('             ab\n                 c', 1)
+        ab
+            c
+    >>> print indent('             ab\n                 c', 2)
+            ab
+                c
+    >>> print indent('                 ab\n                 c', 1)
+        ab
+        c
+    >>> print indent('                 ab\n                 c', 0)
+    ab
+    c
+    """
+    text = textwrap.dedent(text.replace('\r\n', '\n'))
+    lines = []
+    for line in text.splitlines():
+        if line:
+            space = cfg.indent * tabs
+        else:
+            space = ''
+        lines.append(space + line)
+    text = '\n'.join(lines)
+    return text
 
 #                                                     override        private                     function    func    (int a    )      :    int    {         }  
 methodP =  re.compile(functionPrefix
@@ -252,11 +284,11 @@ def methods(klassName, klassContent):
     ['/** comment ~', '/** var ~']
 
     Arguments.  Does not convert default value.
-    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){x=X}')
-    /* var ~ */
+    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
+        /* var ~ */
         ctor: function(X, Y, Width, Height, Zoom=0)
         {
-    x=X
+            x=X
         }
 
     Ignore static functions.
@@ -274,18 +306,21 @@ def methods(klassName, klassContent):
         }
 
     Local variables.
-    >>> print methods('FlxCamera', 'internal function f(){var i:uint=1}')
+    >>> print methods('FlxCamera', 'internal function f(){\nvar i:uint=1}')
         f: function()
         {
-    var i=1
+            var i=1
         }
     """
     funcs = _parseFuncs(klassContent, methodP)
     strs = []
     for blockComment, name, argumentText, content in funcs:
+        blockComment = indent(blockComment, 1)
         if klassName == name:
             name = 'ctor'
-        str = blockComment + cfg.indent + name + ': function(' \
+        name = indent(name, 1)
+        content = indent(content, 2)
+        str = blockComment + name + ': function(' \
             + argumentText \
             + ')\n' + cfg.indent + '{' + content + '\n' + cfg.indent + '}'
         strs.append(str)
@@ -303,11 +338,11 @@ def staticMethods(klassName, klassContent):
     ''
 
     Arguments.  Does not convert default value.
-    >>> print staticMethods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){x=X}')
+    >>> print staticMethods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
     /* var ~ */
     FlxCamera.create = function(X, Y, Width, Height, Zoom=0)
     {
-    x=X
+        x=X
     }
 
     Ignore methods.
@@ -325,15 +360,18 @@ def staticMethods(klassName, klassContent):
     }
 
     Nested local function brackets.
-    >>> print staticMethods('C', 'private static function f(){function g(){}}')
+    >>> print staticMethods('C', 'private static function f(){\nfunction g(){}}')
     C.f = function()
     {
-    function g(){}
+        function g(){}
     }
     """ 
     funcs = _parseFuncs(klassContent, staticMethodP)
     strs = []
     for blockComment, name, argumentText, content in funcs:
+        blockComment = indent(blockComment, 0)
+        content = indent(content, 1)
+        name = indent(name, 0)
         str = blockComment + klassName + '.' + name + ' = function(' \
             + argumentText \
             + ')\n{' + content + '\n}'
