@@ -435,6 +435,24 @@ def staticMethods(klassName, klassContent):
     return '\n\n'.join(strs)
 
 
+requireP = re.compile(r'\s*\bimport\s+([\w\.]+)')
+
+def requires(text):
+    r"""Reformat import statement as node.js require.
+    >>> requires(' import flash.display.Bitmap;\nprivate var i:int;')
+    'require("flash/display/Bitmap.js");\n\n'
+    >>> requires('public var j:uint;\n import flash.display.Bitmap;\nprivate var i:int;')
+    'require("flash/display/Bitmap.js");\n\n'
+    """
+    modules = requireP.findall(text)
+    requiresText = ''
+    if modules:
+        requires = ['require("%s");' % (module.replace('.', '/') + '.js') 
+            for module in modules]
+        requiresText = '\n'.join(requires) + '\n\n'
+    return requiresText
+
+
 #                     package   org.pkg   {       class   ClasA    extends   Clas{        }}
 klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\w+\s+)?{([\s\S]+)}\s*}', re.S)
 
@@ -444,6 +462,7 @@ def convert(text):
     klassContent = klass[1]
 
     str = '';
+    str += requires(text)
     str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' 
     str += '\n' + props(klassContent) 
     str += '\n\n' + methods(klassName, klassContent)

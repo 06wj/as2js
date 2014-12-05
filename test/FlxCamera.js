@@ -1,3 +1,10 @@
+require("flash/display/Bitmap.js");
+require("flash/display/BitmapData.js");
+require("flash/display/Sprite.js");
+require("flash/geom/ColorTransform.js");
+require("flash/geom/Point.js");
+require("flash/geom/Rectangle.js");
+
 var FlxCamera = cc.Class.extend({
     x: undefined,
     y: undefined,

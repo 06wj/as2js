@@ -1,3 +1,14 @@
+require("flash/display/Bitmap.js");
+require("flash/display/BitmapData.js");
+require("flash/display/DisplayObject.js");
+require("flash/display/DisplayObjectContainer.js");
+require("flash/display/MovieClip.js");
+require("flash/display/Sprite.js");
+require("flash/geom/Matrix.js");
+require("flash/geom/Point.js");
+require("flash/geom/Rectangle.js");
+require("flash/events/MouseEvent.js");
+
 var View = cc.Class.extend({
     feedbackClip: undefined,
     model: null,

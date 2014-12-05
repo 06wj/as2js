@@ -42,10 +42,10 @@ Features
 
  * Constructor member variable reassignment.
 
+ * Reformat import statement as node.js require.
+
 Todo
 ====
-
- * Convert import to node.js require.
 
  * Auto prefix member usage with this.
 
