@@ -26,20 +26,20 @@ var View = cc.Class.extend({
      */ 
     ctor: function(parent)
     {
-        model = null;
-        screen = null;
-        feedbackClip = new FeedbackClip();
-        screen = new Screen();
-        rounds = parseRounds();
-        backgroundClip = new BackgroundClip();
+        this.model = null;
+        this.screen = null;
+        this.feedbackClip = new FeedbackClip();
+        this.screen = new Screen();
+        this.rounds = parseRounds();
+        this.backgroundClip = new BackgroundClip();
         parent.addChild(backgroundClip);
-        backgroundClip.gotoAndPlay("begin");
+        this.backgroundClip.gotoAndPlay("begin");
         parent.addChild(screen);
-        screen.gotoAndStop(1);
-        screen.night.mouseChildren = false;
-        screen.night.mouseEnabled = false;
-        filterCorrect = new FilterCorrect().getChildAt(0).filters[0];
-        filterWrong = new FilterWrong().getChildAt(0).filters[0];
+        this.screen.gotoAndStop(1);
+        this.screen.night.mouseChildren = false;
+        this.screen.night.mouseEnabled = false;
+        this.filterCorrect = new FilterCorrect().getChildAt(0).filters[0];
+        this.filterWrong = new FilterWrong().getChildAt(0).filters[0];
     },
 
 
@@ -52,7 +52,7 @@ var View = cc.Class.extend({
         var rounds = [];
         var max = 0;
         var r;
-        var parent = screen.rounds;
+        var parent = this.screen.rounds;
         for (var c = 0; c < parent.numChildren; c++) {
             var child = parent.getChildAt(c) as MovieClip;
             if (child) {
@@ -109,7 +109,7 @@ var View = cc.Class.extend({
     {
         var debugHit = false;
         var point = new Point(stageX, stageY);
-        var hits = screen.rounds.getObjectsUnderPoint(point);
+        var hits = this.screen.rounds.getObjectsUnderPoint(point);
         var found;
         if (debugHit) {
             trace("View.indexOf: " + hits);
@@ -117,10 +117,10 @@ var View = cc.Class.extend({
         for (var h = hits.length - 1; 0 <= h; h--) {
             found = null;
             var hit = hits[h];
-            if (hit is MovieClip varvar screen.rounds != hit) {
+            if (hit is MovieClip && this.screen.rounds != hit) {
                 found = hit as MovieClip;
             }
-            else if (hit.parent varvar hit.parent is MovieClip varvar screen.rounds != hit.parent) {
+            else if (hit.parent && hit.parent is MovieClip && this.screen.rounds != hit.parent) {
                 found = hit.parent;
             }
             if (found) {
@@ -136,7 +136,7 @@ var View = cc.Class.extend({
                 var pixel = bmp.getPixel32(p.x, p.y);
                 if (debugHit) { 
                     var bm = new Bitmap(bmp);
-                    screen.addChild(bm);
+                    this.screen.addChild(bm);
                     if (found) {
                         trace("    name: " + found.name + " point " + p 
                             + " rect " + rect + " pixel " + pixel.toString(16));
@@ -150,7 +150,7 @@ var View = cc.Class.extend({
                     sprite.graphics.beginFill(color);
                     sprite.graphics.drawCircle(p.x, p.y, 10);
                     sprite.graphics.endFill();
-                    screen.addChild(sprite);
+                    this.screen.addChild(sprite);
                 }
                 if (pixel) {
                     break;
@@ -164,8 +164,8 @@ var View = cc.Class.extend({
             trace("found: " + found.name);
         }
         var index = -1;
-        for (var r = 0; r < rounds.length; r++) {
-            index = rounds[r].indexOf(found);
+        for (var r = 0; r < this.rounds.length; r++) {
+            index = this.rounds[r].indexOf(found);
             if (0 <= index) {
                 break;
             }
@@ -175,8 +175,8 @@ var View = cc.Class.extend({
 
     end: function()
     {
-        backgroundClip.gotoAndPlay("end");
-        screen.addFrameScript(screen.totalFrames - 1, screen.stop);
+        this.backgroundClip.gotoAndPlay("end");
+        this.screen.addFrameScript(screen.totalFrames - 1, this.screen.stop);
     },
 
     hideScreen: function()
@@ -184,29 +184,29 @@ var View = cc.Class.extend({
         // trace("View.hideScreen");
         if (reviewClip) {
             remove(reviewClip);
-            reviewClip.visible = false;
+            this.reviewClip.visible = false;
         }
-        screen.stop();
-        screen.visible = false;
+        this.screen.stop();
+        this.screen.visible = false;
         remove(screen);
     },
 
     populate: function(model)
     {
-        this.model = model;
-        for (var r = 0; r < rounds.length; r++) {
-            for (var c = 0; c < rounds[r].length; c++) {
-                rounds[r][c].filters = [];
+        this.model = this.model;
+        for (var r = 0; r < this.rounds.length; r++) {
+            for (var c = 0; c < this.rounds[r].length; c++) {
+                this.rounds[r][c].filters = [];
             }
         }
         if (!model.complete) {
-            var previous = rounds[model.round][model.target];
+            var previous = this.rounds[model.round][model.target];
             previous.visible = false;
-            var current = rounds[model.round + 1][model.target];
+            var current = this.rounds[model.round + 1][model.target];
             current.visible = true;
-            if (model.trial < model.trialTutor) {
+            if (model.trial < this.model.trialTutor) {
                 current.filters = [filterCorrect.clone()];
-                current.filters[0].strength = 6.0 - 0.05 * model.referee.percent;
+                current.filters[0].strength = 6.0 - 0.05 * this.model.referee.percent;
             }
         }
     },
@@ -214,33 +214,33 @@ var View = cc.Class.extend({
     review: function()
     {
         trace("View.review");
-        screen.stop();
-        reviewClip = new ReviewClip();
-        screen.addChild(reviewClip);
-        reviewClip.addFrameScript(reviewClip.totalFrames - 3, screen.play);
-        screen.rounds.alpha = 0.0;
-        reviewClip.count.text = model.referee.percent.toString() + "%";
-        reviewClip.minutes.text = model.referee.minutes;
-        reviewClip.score.text = model.referee.score.toString();
-        reviewClip.count.mouseEnabled = false;
-        reviewClip.minutes.mouseEnabled = false;
+        this.screen.stop();
+        this.reviewClip = new ReviewClip();
+        this.screen.addChild(reviewClip);
+        this.reviewClip.addFrameScript(reviewClip.totalFrames - 3, this.screen.play);
+        this.screen.rounds.alpha = 0.0;
+        this.reviewClip.count.text = this.model.referee.percent.toString() + "%";
+        this.reviewClip.minutes.text = this.model.referee.minutes;
+        this.reviewClip.score.text = this.model.referee.score.toString();
+        this.reviewClip.count.mouseEnabled = false;
+        this.reviewClip.minutes.mouseEnabled = false;
     },
 
     win: function()
     {
-        if ("trial" != backgroundClip.currentLabel) {
-            backgroundClip.gotoAndPlay("trial");
+        if ("trial" != this.backgroundClip.currentLabel) {
+            this.backgroundClip.gotoAndPlay("trial");
         }
     },
 
     feedback: function(targetIndex, correct)
     {
-        var target = rounds[model.round][targetIndex];
-        feedbackClip.x = target.x;
-        feedbackClip.y = target.y;
+        var target = this.rounds[model.round][targetIndex];
+        this.feedbackClip.x = target.x;
+        this.feedbackClip.y = target.y;
         target.parent.addChild(feedbackClip);
         var label = correct ? "correct" : "wrong";
-        feedbackClip.gotoAndPlay(label);
+        this.feedbackClip.gotoAndPlay(label);
         target.filters = correct ? [filterCorrect.clone()]
                                     : [filterWrong.clone()];
     },
@@ -252,8 +252,8 @@ var View = cc.Class.extend({
     trialEnd: function()
     {
         cancel();
-        if ("end" != screen.currentLabel) {
-            screen.gotoAndPlay("end");
+        if ("end" != this.screen.currentLabel) {
+            this.screen.gotoAndPlay("end");
         }
     },
 
@@ -266,8 +266,8 @@ var View = cc.Class.extend({
     {
         hideScreen();
         clear();
-        backgroundClip.stop();
-        screen.stop();
+        this.backgroundClip.stop();
+        this.screen.stop();
         remove(backgroundClip);
     }
 });
@@ -276,7 +276,7 @@ var View = cc.Class.extend({
 
 View.remove = function(child)
 {
-    if (null != child varvar null != child.parent varvar child.parent.contains(child)) {
+    if (null != child && null != child.parent && child.parent.contains(child)) {
         child.parent.removeChild(child);
     }
 }

@@ -130,8 +130,14 @@ def _escapeLocal(original):
 
 
 def _unescapeLocal(safe):
-    return safe.replace(varEscapeEscape, varEscape) \
-        .replace(varEscape, var)
+    """
+    Preserve '&&'
+    >>> _unescapeLocal(varEscapeEscape)
+    '&'
+    """
+    return safe \
+        .replace(varEscape, var) \
+        .replace(varEscapeEscape, varEscape)
 
 
 localVariableP = re.compile(localVariableEscaped)
@@ -199,7 +205,7 @@ def props(klassContent, inConstructor = False):
     """
     props = propP.findall(klassContent)
     strs = []
-    for name, dataType, definition in props:
+    for declaration, dataType, definition in props:
         if definition:
             if not inConstructor:
                 definition = definition.replace(' =', ':').replace('=', ':')
@@ -207,7 +213,7 @@ def props(klassContent, inConstructor = False):
         else:
             definition = ': undefined'
             include = False
-        line = name + definition
+        line = declaration + definition
         if not inConstructor or include:
             strs.append(line)
     str = ''
@@ -239,6 +245,13 @@ function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([^' + functionEnd
 
 
 def _parseFuncs(klassContent, methodP):
+    """
+    Preserve '&&'
+    >>> klassContent = 'public static function no(){return 0 && 1}'
+    >>> funcs = _parseFuncs(klassContent, staticMethodP)
+    >>> print funcs[0]['content']
+        return 0 && 1
+    """
     escaped = _escapeEnds(klassContent)
     funcs = methodP.findall(escaped)
     formatted = []
@@ -309,6 +322,57 @@ def _formatFunc(func, operator):
         + func['content'] + '\n}'
 
 
+def _findDeclarations(klassContent):
+    props = propP.findall(klassContent)
+    declarations = []
+    for declaration, dataType, definition in props:
+        declarations.append(declaration)
+    return declarations
+
+
+def _findLocalDeclarations(funcContent):
+    escaped = _escapeLocal(funcContent)
+    variables = localVariableP.findall(escaped)
+    declarations = [declaration
+        for keyword, declaration, dataType, definition in variables]
+    return declarations
+
+
+def exclude(list, exclusions):
+    """New list
+    >>> exclude(['a', 'b', 'c'], ['b'])
+    ['a', 'c']
+    """
+    included = []
+    for item in list:
+        if not item in exclusions:
+            included.append(item)
+    return included
+
+
+identifierP = re.compile(r'\s+(\w+)\b')
+
+def scopeMembers(memberDeclarations, funcContent):
+    r"""
+    >>> print scopeMembers(['x', 'y', 'f'], 'var x:int = 0;\nx += y;\nf();\nfunction g(){}; g()')
+    var x:int = 0;
+    x += this.y;
+    this.f();
+    function g(){}; g()
+    """
+    scoped = funcContent
+    localDeclarations = _findLocalDeclarations(funcContent)
+    memberDeclarations = exclude(memberDeclarations, localDeclarations)
+    identifiers = identifierP.findall(funcContent)
+    memberIdentifiers = [identifier
+        for identifier in identifiers 
+            if identifier in memberDeclarations]
+    for identifier in memberIdentifiers:
+        memberIdentifierP = re.compile(r'(\s+)(%s)\b' % identifier)
+        scoped = re.sub(memberIdentifierP, r'\1this.\2', scoped)
+    return scoped
+
+
 #                                                     override        private                     function    func    (int a    )      :    int    {         }  
 methodP =  re.compile(functionPrefix
     + notStatic
@@ -352,24 +416,27 @@ def methods(klassName, klassContent):
         }
 
     Local variables.
-    >>> print methods('FlxCamera', 'internal function f(){\nvar i:uint=1}')
+    >>> print methods('FlxCamera', 'internal function f(){\nvar i:uint=1;\ni++}')
         f: function()
         {
-            var i=1
+            var i=1;
+            i++
         }
 
     Explicitly include defaults into constructor.
-    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int = 0;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
+    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int = 0;private var x:int;private var f:Function;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X\nf()}')
         /* var ~ */
         ctor: function(X, Y, Width, Height, Zoom)
         {
-            ID = 0;
+            this.ID = 0;
             if (undefined === Zoom) {
                 Zoom=0;
             }
-            x=X
+            this.x=X
+            this.f()
         }
     """
+    declarations = _findDeclarations(klassContent)
     funcs = _parseFuncs(klassContent, methodP)
     strs = []
     for func in funcs:
@@ -378,6 +445,8 @@ def methods(klassName, klassContent):
             defaults = props(klassContent, True)
             if defaults:
                 func['content'] = '\n' + defaults + func['content']
+        func['content'] = scopeMembers(declarations, func['content'])
+
         str = _formatFunc(func, ': ')
         str = indent(str, 1)
         strs.append(str)

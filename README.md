@@ -44,10 +44,10 @@ Features
 
  * Reformat import statement as node.js require.
 
+ * Auto prefix member access with this.
+
 Todo
 ====
-
- * Auto prefix member usage with this.
 
  * Auto prefix static usage with class name.
 
@@ -71,6 +71,7 @@ Not supported
     :%!python -m as2js/convert
 
  * Variable or method with undeclared namespace.
+ * ActionScript 'get' and 'set' functions.
 
  * Multiple classes per file.
 

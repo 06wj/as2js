@@ -57,52 +57,52 @@ var FlxCamera = cc.Class.extend({
         if (undefined === Zoom) {
             Zoom=0;
         }
-        x = X;
-        y = Y;
-        width = Width;
-        height = Height;
-        target = null;
-        deadzone = null;
-        scroll = new FlxPoint();
-        _point = new FlxPoint();
-        bounds = null;
-        screen = new FlxSprite();
-        screen.makeGraphic(width,height,0,true);
-        screen.setOriginToCorner();
-        buffer = screen.pixels;
-        bgColor = FlxG.bgColor;
-        _color = 0xffffff;
+        this.x = X;
+        this.y = Y;
+        this.width = Width;
+        this.height = Height;
+        this.target = null;
+        this.deadzone = null;
+        this.scroll = new FlxPoint();
+        this._point = new FlxPoint();
+        this.bounds = null;
+        this.screen = new FlxSprite();
+        this.screen.makeGraphic(width,height,0,true);
+        this.screen.setOriginToCorner();
+        this.buffer = this.screen.pixels;
+        this.bgColor = FlxG.bgColor;
+        this._color = 0xffffff;
 
-        _flashBitmap = new Bitmap(buffer);
-        _flashBitmap.x = -width*0.5;
-        _flashBitmap.y = -height*0.5;
-        _flashSprite = new Sprite();
+        this._flashBitmap = new Bitmap(buffer);
+        this._flashBitmap.x = -width*0.5;
+        this._flashBitmap.y = -height*0.5;
+        this._flashSprite = new Sprite();
         zoom = Zoom; //sets the scale of flash sprite, which in turn loads flashoffset values
-        _flashOffsetX = width*0.5*zoom;
-        _flashOffsetY = height*0.5*zoom;
-        _flashSprite.x = x + _flashOffsetX;
-        _flashSprite.y = y + _flashOffsetY;
-        _flashSprite.addChild(_flashBitmap);
-        _flashRect = new Rectangle(0,0,width,height);
-        _flashPoint = new Point();
+        this._flashOffsetX = this.width*0.5*zoom;
+        this._flashOffsetY = this.height*0.5*zoom;
+        this._flashSprite.x = this.x + this._flashOffsetX;
+        this._flashSprite.y = this.y + this._flashOffsetY;
+        this._flashSprite.addChild(_flashBitmap);
+        this._flashRect = new Rectangle(0,0,width,height);
+        this._flashPoint = new Point();
 
-        _fxFlashColor = 0;
-        _fxFlashDuration = 0.0;
-        _fxFlashComplete = null;
-        _fxFlashAlpha = 0.0;
+        this._fxFlashColor = 0;
+        this._fxFlashDuration = 0.0;
+        this._fxFlashComplete = null;
+        this._fxFlashAlpha = 0.0;
 
-        _fxFadeColor = 0;
-        _fxFadeDuration = 0.0;
-        _fxFadeComplete = null;
-        _fxFadeAlpha = 0.0;
+        this._fxFadeColor = 0;
+        this._fxFadeDuration = 0.0;
+        this._fxFadeComplete = null;
+        this._fxFadeAlpha = 0.0;
 
-        _fxShakeIntensity = 0.0;
-        _fxShakeDuration = 0.0;
-        _fxShakeComplete = null;
-        _fxShakeOffset = new FlxPoint();
-        _fxShakeDirection = 0;
+        this._fxShakeIntensity = 0.0;
+        this._fxShakeDuration = 0.0;
+        this._fxShakeComplete = null;
+        this._fxShakeOffset = new FlxPoint();
+        this._fxShakeDirection = 0;
 
-        _fill = new BitmapData(width,height,true,0);
+        this._fill = new BitmapData(width,height,true,0);
     },
 
 
@@ -112,21 +112,21 @@ var FlxCamera = cc.Class.extend({
      */
     destroy: function()
     {
-        screen.destroy();
-        screen = null;
-        target = null;
-        scroll = null;
-        deadzone = null;
-        bounds = null;
-        buffer = null;
-        _flashBitmap = null;
-        _flashRect = null;
-        _flashPoint = null;
-        _fxFlashComplete = null;
-        _fxFadeComplete = null;
-        _fxShakeComplete = null;
-        _fxShakeOffset = null;
-        _fill = null;
+        this.screen.destroy();
+        this.screen = null;
+        this.target = null;
+        this.scroll = null;
+        this.deadzone = null;
+        this.bounds = null;
+        this.buffer = null;
+        this._flashBitmap = null;
+        this._flashRect = null;
+        this._flashPoint = null;
+        this._fxFlashComplete = null;
+        this._fxFadeComplete = null;
+        this._fxShakeComplete = null;
+        this._fxShakeOffset = null;
+        this._fill = null;
     },
 
 
@@ -137,7 +137,7 @@ var FlxCamera = cc.Class.extend({
     update: function()
     {
         //Either follow the object closely, 
-        //or doublecheck our deadzone and update accordingly.
+        //or doublecheck our this.deadzone and update accordingly.
         if(target != null)
         {
         	if(deadzone == null)
@@ -145,74 +145,74 @@ var FlxCamera = cc.Class.extend({
         	else
         	{
         		var edge;
-        		var targetX = target.x + ((target.x > 0)?0.0000001:-0.0000001);
-        		var targetY = target.y + ((target.y > 0)?0.0000001:-0.0000001);
+        		var targetX = this.target.x + ((target.x > 0)?0.0000001:-0.0000001);
+        		var targetY = this.target.y + ((target.y > 0)?0.0000001:-0.0000001);
 
-        		edge = targetX - deadzone.x;
+        		edge = targetX - this.deadzone.x;
         		if(scroll.x > edge)
-        			scroll.x = edge;
-        		edge = targetX + target.width - deadzone.x - deadzone.width;
+        			this.scroll.x = edge;
+        		edge = targetX + this.target.width - this.deadzone.x - this.deadzone.width;
         		if(scroll.x < edge)
-        			scroll.x = edge;
+        			this.scroll.x = edge;
 
-        		edge = targetY - deadzone.y;
+        		edge = targetY - this.deadzone.y;
         		if(scroll.y > edge)
-        			scroll.y = edge;
-        		edge = targetY + target.height - deadzone.y - deadzone.height;
+        			this.scroll.y = edge;
+        		edge = targetY + this.target.height - this.deadzone.y - this.deadzone.height;
         		if(scroll.y < edge)
-        			scroll.y = edge;
+        			this.scroll.y = edge;
         	}
         }
 
-        //Make sure we didn't go outside the camera's bounds
+        //Make sure we didn't go outside the camera's this.bounds
         if(bounds != null)
         {
-        	if(scroll.x < bounds.left)
-        		scroll.x = bounds.left;
-        	if(scroll.x > bounds.right - width)
-        		scroll.x = bounds.right - width;
-        	if(scroll.y < bounds.top)
-        		scroll.y = bounds.top;
-        	if(scroll.y > bounds.bottom - height)
-        		scroll.y = bounds.bottom - height;
+        	if(scroll.x < this.bounds.left)
+        		this.scroll.x = this.bounds.left;
+        	if(scroll.x > this.bounds.right - this.width)
+        		this.scroll.x = this.bounds.right - this.width;
+        	if(scroll.y < this.bounds.top)
+        		this.scroll.y = this.bounds.top;
+        	if(scroll.y > this.bounds.bottom - this.height)
+        		this.scroll.y = this.bounds.bottom - this.height;
         }
 
         //Update the "flash" special effect
         if(_fxFlashAlpha > 0.0)
         {
-        	_fxFlashAlpha -= FlxG.elapsed/_fxFlashDuration;
-        	if((_fxFlashAlpha <= 0) varvar (_fxFlashComplete != null))
-        		_fxFlashComplete();
+        	this._fxFlashAlpha -= FlxG.elapsed/_fxFlashDuration;
+        	if((_fxFlashAlpha <= 0) && (_fxFlashComplete != null))
+        		this._fxFlashComplete();
         }
 
         //Update the "fade" special effect
-        if((_fxFadeAlpha > 0.0) varvar (_fxFadeAlpha < 1.0))
+        if((_fxFadeAlpha > 0.0) && (_fxFadeAlpha < 1.0))
         {
-        	_fxFadeAlpha += FlxG.elapsed/_fxFadeDuration;
+        	this._fxFadeAlpha += FlxG.elapsed/_fxFadeDuration;
         	if(_fxFadeAlpha >= 1.0)
         	{
-        		_fxFadeAlpha = 1.0;
+        		this._fxFadeAlpha = 1.0;
         		if(_fxFadeComplete != null)
-        			_fxFadeComplete();
+        			this._fxFadeComplete();
         	}
         }
 
         //Update the "shake" special effect
         if(_fxShakeDuration > 0)
         {
-        	_fxShakeDuration -= FlxG.elapsed;
+        	this._fxShakeDuration -= FlxG.elapsed;
         	if(_fxShakeDuration <= 0)
         	{
-        		_fxShakeOffset.make();
+        		this._fxShakeOffset.make();
         		if(_fxShakeComplete != null)
-        			_fxShakeComplete();
+        			this._fxShakeComplete();
         	}
         	else
         	{
         		if((_fxShakeDirection == SHAKE_BOTH_AXES) || (_fxShakeDirection == SHAKE_HORIZONTAL_ONLY))
-        			_fxShakeOffset.x = (FlxG.random()*_fxShakeIntensity*width*2-_fxShakeIntensity*width)*_zoom;
+        			this._fxShakeOffset.x = (FlxG.random()*_fxShakeIntensity*width*2-_fxShakeIntensity*width)*_zoom;
         		if((_fxShakeDirection == SHAKE_BOTH_AXES) || (_fxShakeDirection == SHAKE_VERTICAL_ONLY))
-        			_fxShakeOffset.y = (FlxG.random()*_fxShakeIntensity*height*2-_fxShakeIntensity*height)*_zoom;
+        			this._fxShakeOffset.y = (FlxG.random()*_fxShakeIntensity*height*2-_fxShakeIntensity*height)*_zoom;
         	}
         }
     },
@@ -230,26 +230,26 @@ var FlxCamera = cc.Class.extend({
         if (undefined === Style) {
             Style=STYLE_LOCKON;
         }
-        target = Target;
+        this.target = Target;
         var helper;
         switch(Style)
         {
         	case STYLE_PLATFORMER:
-        		var w = width/8;
-        		var h = height/3;
-        		deadzone = new FlxRect((width-w)/2,(height-h)/2 - h*0.25,w,h);
+        		var w = this.width/8;
+        		var h = this.height/3;
+        		this.deadzone = new FlxRect((width-w)/2,(height-h)/2 - h*0.25,w,h);
         		break;
         	case STYLE_TOPDOWN:
         		helper = FlxU.max(width,height)/4;
-        		deadzone = new FlxRect((width-helper)/2,(height-helper)/2,helper,helper);
+        		this.deadzone = new FlxRect((width-helper)/2,(height-helper)/2,helper,helper);
         		break;
         	case STYLE_TOPDOWN_TIGHT:
         		helper = FlxU.max(width,height)/8;
-        		deadzone = new FlxRect((width-helper)/2,(height-helper)/2,helper,helper);
+        		this.deadzone = new FlxRect((width-helper)/2,(height-helper)/2,helper,helper);
         		break;
         	case STYLE_LOCKON:
         	default:
-        		deadzone = null;
+        		this.deadzone = null;
         		break;
         }
     },
@@ -265,7 +265,7 @@ var FlxCamera = cc.Class.extend({
     {
         Point.x += (Point.x > 0)?0.0000001:-0.0000001;
         Point.y += (Point.y > 0)?0.0000001:-0.0000001;
-        scroll.make(Point.x - width*0.5,Point.y - height*0.5);
+        this.scroll.make(Point.x - this.width*0.5,Point.y - this.height*0.5);
     },
 
 
@@ -297,8 +297,8 @@ var FlxCamera = cc.Class.extend({
             UpdateWorld=false;
         }
         if(bounds == null)
-        	bounds = new FlxRect();
-        bounds.make(X,Y,Width,Height);
+        	this.bounds = new FlxRect();
+        this.bounds.make(X,Y,Width,Height);
         if(UpdateWorld)
         	FlxG.worldBounds.copyFrom(bounds);
         update();
@@ -328,14 +328,14 @@ var FlxCamera = cc.Class.extend({
         if (undefined === Force) {
             Force=false;
         }
-        if(!Force varvar (_fxFlashAlpha > 0.0))
+        if(!Force && (_fxFlashAlpha > 0.0))
         	return;
-        _fxFlashColor = Color;
+        this._fxFlashColor = Color;
         if(Duration <= 0)
         	Duration = Number.MIN_VALUE;
-        _fxFlashDuration = Duration;
-        _fxFlashComplete = OnComplete;
-        _fxFlashAlpha = 1.0;
+        this._fxFlashDuration = Duration;
+        this._fxFlashComplete = OnComplete;
+        this._fxFlashAlpha = 1.0;
     },
 
 
@@ -362,14 +362,14 @@ var FlxCamera = cc.Class.extend({
         if (undefined === Force) {
             Force=false;
         }
-        if(!Force varvar (_fxFadeAlpha > 0.0))
+        if(!Force && (_fxFadeAlpha > 0.0))
         	return;
-        _fxFadeColor = Color;
+        this._fxFadeColor = Color;
         if(Duration <= 0)
         	Duration = Number.MIN_VALUE;
-        _fxFadeDuration = Duration;
-        _fxFadeComplete = OnComplete;
-        _fxFadeAlpha = Number.MIN_VALUE;
+        this._fxFadeDuration = Duration;
+        this._fxFadeComplete = OnComplete;
+        this._fxFadeAlpha = Number.MIN_VALUE;
     },
 
 
@@ -400,13 +400,13 @@ var FlxCamera = cc.Class.extend({
         if (undefined === Direction) {
             Direction=SHAKE_BOTH_AXES;
         }
-        if(!Force varvar ((_fxShakeOffset.x != 0) || (_fxShakeOffset.y != 0)))
+        if(!Force && ((_fxShakeOffset.x != 0) || (_fxShakeOffset.y != 0)))
         	return;
-        _fxShakeIntensity = Intensity;
-        _fxShakeDuration = Duration;
-        _fxShakeComplete = OnComplete;
-        _fxShakeDirection = Direction;
-        _fxShakeOffset.make();
+        this._fxShakeIntensity = Intensity;
+        this._fxShakeDuration = Duration;
+        this._fxShakeComplete = OnComplete;
+        this._fxShakeDirection = Direction;
+        this._fxShakeOffset.make();
     },
 
 
@@ -416,11 +416,11 @@ var FlxCamera = cc.Class.extend({
      */
     stopFX: function()
     {
-        _fxFlashAlpha = 0.0;
-        _fxFadeAlpha = 0.0;
-        _fxShakeDuration = 0;
-        _flashSprite.x = x + width*0.5;
-        _flashSprite.y = y + height*0.5;
+        this._fxFlashAlpha = 0.0;
+        this._fxFadeAlpha = 0.0;
+        this._fxShakeDuration = 0;
+        this._flashSprite.x = this.x + this.width*0.5;
+        this._flashSprite.y = this.y + this.height*0.5;
     },
 
 
@@ -435,23 +435,23 @@ var FlxCamera = cc.Class.extend({
     copyFrom: function(Camera)
     {
         if(Camera.bounds == null)
-        	bounds = null;
+        	this.bounds = null;
         else
         {
         	if(bounds == null)
-        		bounds = new FlxRect();
-        	bounds.copyFrom(Camera.bounds);
+        		this.bounds = new FlxRect();
+        	this.bounds.copyFrom(Camera.bounds);
         }
-        target = Camera.target;
+        this.target = Camera.target;
         if(target != null)
         {
         	if(Camera.deadzone == null)
-        		deadzone = null;
+        		this.deadzone = null;
         	else
         	{
         		if(deadzone == null)
-        			deadzone = new FlxRect();
-        		deadzone.copyFrom(Camera.deadzone);
+        			this.deadzone = new FlxRect();
+        		this.deadzone.copyFrom(Camera.deadzone);
         	}
         }
         return this;
@@ -466,7 +466,7 @@ var FlxCamera = cc.Class.extend({
      */
     getScale: function()
     {
-        return _point.make(_flashSprite.scaleX,_flashSprite.scaleY);
+        return this._point.make(_flashSprite.scaleX,_flashSprite.scaleY);
     },
 
 
@@ -476,8 +476,8 @@ var FlxCamera = cc.Class.extend({
      */
     setScale: function(X, Y)
     {
-        _flashSprite.scaleX = X;
-        _flashSprite.scaleY = Y;
+        this._flashSprite.scaleX = X;
+        this._flashSprite.scaleY = Y;
     },
 
 
@@ -495,7 +495,7 @@ var FlxCamera = cc.Class.extend({
      */
     getContainerSprite: function()
     {
-        return _flashSprite;
+        return this._flashSprite;
     },
 
 
@@ -511,8 +511,8 @@ var FlxCamera = cc.Class.extend({
         if (undefined === BlendAlpha) {
             BlendAlpha=true;
         }
-        _fill.fillRect(_flashRect,Color);
-        buffer.copyPixels(_fill,_flashRect,_flashPoint,null,null,BlendAlpha);
+        this._fill.fillRect(_flashRect,Color);
+        this.buffer.copyPixels(_fill,_flashRect,_flashPoint,null,null,BlendAlpha);
     },
 
 
@@ -524,24 +524,24 @@ var FlxCamera = cc.Class.extend({
     {
         var alphaComponent;
 
-        //Draw the "flash" special effect onto the buffer
+        //Draw the "flash" special effect onto the this.buffer
         if(_fxFlashAlpha > 0.0)
         {
-        	alphaComponent = _fxFlashColor>>24;
-        	fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFlashAlpha)<<24)+(_fxFlashColorvar0x00ffffff));
+        	alphaComponent = this._fxFlashColor>>24;
+        	fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFlashAlpha)<<24)+(_fxFlashColor&0x00ffffff));
         }
 
-        //Draw the "fade" special effect onto the buffer
+        //Draw the "fade" special effect onto the this.buffer
         if(_fxFadeAlpha > 0.0)
         {
-        	alphaComponent = _fxFadeColor>>24;
-        	fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFadeAlpha)<<24)+(_fxFadeColorvar0x00ffffff));
+        	alphaComponent = this._fxFadeColor>>24;
+        	fill((uint(((alphaComponent <= 0)?0xff:alphaComponent)*_fxFadeAlpha)<<24)+(_fxFadeColor&0x00ffffff));
         }
 
         if((_fxShakeOffset.x != 0) || (_fxShakeOffset.y != 0))
         {
-        	_flashSprite.x = x + _flashOffsetX + _fxShakeOffset.x;
-        	_flashSprite.y = y + _flashOffsetY + _fxShakeOffset.y;
+        	this._flashSprite.x = this.x + this._flashOffsetX + this._fxShakeOffset.x;
+        	this._flashSprite.y = this.y + this._flashOffsetY + this._fxShakeOffset.y;
         }
     }
 });

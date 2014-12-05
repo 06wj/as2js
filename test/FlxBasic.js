@@ -14,12 +14,12 @@ var FlxBasic = cc.Class.extend({
      */
     ctor: function()
     {
-        ID = -1;
-        exists = true;
-        active = true;
-        visible = true;
-        alive = true;
-        ignoreDrawDebug = false;
+        this.ID = -1;
+        this.exists = true;
+        this.active = true;
+        this.visible = true;
+        this.alive = true;
+        this.ignoreDrawDebug = false;
     },
 
 
@@ -71,15 +71,15 @@ var FlxBasic = cc.Class.extend({
     draw: function()
     {
         if(cameras == null)
-        	cameras = FlxG.cameras;
+        	this.cameras = FlxG.cameras;
         var camera;
         var i = 0;
-        var l = cameras.length;
+        var l = this.cameras.length;
         while(i < l)
         {
-        	camera = cameras[i++];
+        	camera = this.cameras[i++];
         	_VISIBLECOUNT++;
-        	if(FlxG.visualDebug varvar !ignoreDrawDebug)
+        	if(FlxG.visualDebug && !ignoreDrawDebug)
         		drawDebug(camera);
         }
     },
@@ -110,8 +110,8 @@ var FlxBasic = cc.Class.extend({
      */
     kill: function()
     {
-        alive = false;
-        exists = false;
+        this.alive = false;
+        this.exists = false;
     },
 
 
@@ -122,8 +122,8 @@ var FlxBasic = cc.Class.extend({
      */
     revive: function()
     {
-        alive = true;
-        exists = true;
+        this.alive = true;
+        this.exists = true;
     },
 
 
