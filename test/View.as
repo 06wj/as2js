@@ -17,8 +17,8 @@ package com.finegamedesign.change
     public class View
     {
         internal var feedbackClip:MovieClip;
-        internal var model:Model;
-        internal var screen:Screen;
+        internal var model:Model = null;
+        internal var screen:Screen = null;
         internal var backgroundClip:BackgroundClip;
         private var reviewClip:ReviewClip;
         internal var rounds:Array;

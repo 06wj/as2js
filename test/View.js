@@ -1,7 +1,7 @@
 var View = cc.Class.extend({
     feedbackClip: undefined,
-    model: undefined,
-    screen: undefined,
+    model: null,
+    screen: null,
     backgroundClip: undefined,
     reviewClip: undefined,
     rounds: undefined,
@@ -15,6 +15,8 @@ var View = cc.Class.extend({
      */ 
     ctor: function(parent)
     {
+        model = null;
+        screen = null;
         feedbackClip = new FeedbackClip();
         screen = new Screen();
         rounds = parseRounds();

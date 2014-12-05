@@ -195,7 +195,7 @@ def props(klassContent, inConstructor = False):
     Exclude undefined, indented twice.
     >>> props('public var ID:int = 1;\npublic var exists:Boolean;',
     ...     inConstructor = True)
-    '        ID = 1;'
+    '    ID = 1;'
     """
     props = propP.findall(klassContent)
     strs = []
@@ -212,15 +212,13 @@ def props(klassContent, inConstructor = False):
             strs.append(line)
     str = ''
     if inConstructor:
-        indents = 2
         separator = ';'
     else:
-        indents = 1
         separator = ','
     if strs:
         lineSeparator = separator + '\n'
         str = lineSeparator.join(strs)
-        str = indent(str, indents)
+        str = indent(str, 1)
         str += separator
     return str
 
@@ -377,6 +375,9 @@ def methods(klassName, klassContent):
     for func in funcs:
         if klassName == func['name']:
             func['name'] = 'ctor'
+            defaults = props(klassContent, True)
+            if defaults:
+                func['content'] = '\n' + defaults + func['content']
         str = _formatFunc(func, ': ')
         str = indent(str, 1)
         strs.append(str)

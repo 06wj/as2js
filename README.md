@@ -40,10 +40,10 @@ Features
 
  * Constants.
 
+ * Constructor member variable reassignment.
+
 Todo
 ====
-
- * Constructor member variable reassignment.
 
  * Convert import to node.js require.
 
