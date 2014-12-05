@@ -36,10 +36,10 @@ Features
 
  * Dedent methods.
 
+ * Default arguments.
+
 Todo
 ====
-
- * Default arguments.
 
  * Constructor member variable reassignment.
 
@@ -50,6 +50,10 @@ Todo
  * Auto prefix static usage with class name.
 
  * Intermediate untyped, explicit scope ActionScript format.
+
+ * Class comment.
+
+ * Constants.
 
 
 Not supported

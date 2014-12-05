@@ -228,21 +228,27 @@ def _parseFuncs(klassContent, methodP):
         if blockComment:
             blockComment = _unescapeEnds(blockComment)
             blockComment += '\n'
+        blockComment = indent(blockComment, 0)
+        name = indent(name, 0)
         arguments = argumentP.findall(argumentAS)
-        arguments = [declaration + definition 
-            for declaration, dataType, definition in arguments]
-        argumentText = ', '.join(arguments)
-        defaultArguments = ''
+        argumentsJS = []
+        defaultArguments = []
+        for declaration, dataType, definition in arguments:
+            argumentsJS.append(declaration)
+            if definition:
+                defaultArguments.append('if (undefined === ' + declaration + ') {')
+                defaultArguments.append(cfg.indent + declaration + definition + ';')
+                defaultArguments.append('}')
+        argumentText = ', '.join(argumentsJS)
+        defaultArgumentText = '\n'.join(defaultArguments)
+        if defaultArgumentText:
+            defaultArgumentText = '\n' + indent(defaultArgumentText, 1)
         if not content or content.isspace():
             content = ''
         else:
             content = localVariables(content)
-        blockComment = indent(blockComment, 0)
         content = indent(content, 1)
-        name = indent(name, 0)
-        if defaultArguments:
-            defaultArguments = indent(defaultArguments, 1) + '\n'
-        content = defaultArguments + content
+        content = defaultArgumentText + content
         formatted.append({'blockComment': blockComment, 
             'name': name, 
             'argumentText': argumentText, 
@@ -390,7 +396,8 @@ def staticMethods(klassName, klassContent):
     funcs = _parseFuncs(klassContent, staticMethodP)
     strs = []
     for func in funcs:
-        str = klassName + '.' + _formatFunc(func, ' = ')
+        func['name'] = klassName + '.' + func['name']
+        str = _formatFunc(func, ' = ')
         strs.append(str)
     return '\n\n'.join(strs)
 
