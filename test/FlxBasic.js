@@ -7,35 +7,28 @@
  * @author	Adam Atomic
  */
 var FlxBasic = cc.Class.extend({
-
-
     /**
      * IDs seem like they could be pretty useful, huh?
      * They're not actually used for anything yet though.
      */
     ID: undefined,
-
     /**
      * Controls whether <code>update()</code> and <code>draw()</code> are automatically called by FlxState/FlxGroup.
      */
     exists: undefined,
-
     /**
      * Controls whether <code>update()</code> is automatically called by FlxState/FlxGroup.
      */
     active: undefined,
-
     /**
      * Controls whether <code>draw()</code> is automatically called by FlxState/FlxGroup.
      */
     visible: undefined,
-
     /**
      * Useful state for many game objects - "dead" (!alive) vs alive.
      * <code>kill()</code> and <code>revive()</code> both flip this switch (along with exists, but you can override that).
      */
     alive: undefined,
-
     /**
      * An array of camera objects that this object will use during <code>draw()</code>.
      * This value will initialize itself during the first draw to automatically
@@ -43,14 +36,11 @@ var FlxBasic = cc.Class.extend({
      * You can also change it afterward too, very flexible!
      */
     cameras: undefined,
-
     /**
      * Setting this to true will prevent the object from appearing
      * when the visual debug mode in the debugger overlay is toggled on.
      */
     ignoreDrawDebug: undefined,
-
-
 
     /**
      * Instantiate the basic flixel object.
@@ -65,8 +55,6 @@ var FlxBasic = cc.Class.extend({
         this.ignoreDrawDebug = false;
     },
 
-
-
     /**
      * Override this function to null out variables or manually call
      * <code>destroy()</code> on class members if necessary.
@@ -76,17 +64,13 @@ var FlxBasic = cc.Class.extend({
     {
     },
 
-
-
     /**
      * Pre-update is called right before <code>update()</code> on each object in the game loop.
      */
     preUpdate: function()
     {
-        _ACTIVECOUNT++;
+        FlxBasic._ACTIVECOUNT++;
     },
-
-
 
     /**
      * Override this function to update your class's position and appearance.
@@ -96,8 +80,6 @@ var FlxBasic = cc.Class.extend({
     {
     },
 
-
-
     /**
      * Post-update is called right after <code>update()</code> on each object in the game loop.
      */
@@ -105,15 +87,13 @@ var FlxBasic = cc.Class.extend({
     {
     },
 
-
-
     /**
      * Override this function to control how the object is drawn.
      * Overriding <code>draw()</code> is rarely necessary, but can be very useful.
      */
     draw: function()
     {
-        if(cameras == null)
+        if(this.cameras == null)
         	this.cameras = FlxG.cameras;
         var camera;
         var i = 0;
@@ -121,13 +101,11 @@ var FlxBasic = cc.Class.extend({
         while(i < l)
         {
         	camera = this.cameras[i++];
-        	_VISIBLECOUNT++;
-        	if(FlxG.visualDebug && !ignoreDrawDebug)
+        	FlxBasic._VISIBLECOUNT++;
+        	if(FlxG.visualDebug && !this.ignoreDrawDebug)
         		this.drawDebug(camera);
         }
     },
-
-
 
     /**
      * Override this function to draw custom "debug mode" graphics to the
@@ -142,8 +120,6 @@ var FlxBasic = cc.Class.extend({
         }
     },
 
-
-
     /**
      * Handy function for "killing" game objects.
      * Default behavior is to flag them as nonexistent AND dead.
@@ -157,8 +133,6 @@ var FlxBasic = cc.Class.extend({
         this.exists = false;
     },
 
-
-
     /**
      * Handy function for bringing game objects "back to life". Just sets alive and exists back to true.
      * In practice, this function is most often called by <code>FlxObject.reset()</code>.
@@ -168,8 +142,6 @@ var FlxBasic = cc.Class.extend({
         this.alive = true;
         this.exists = true;
     },
-
-
 
     /**
      * Convert object to readable string name.  Useful for debugging, save games, etc.

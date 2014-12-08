@@ -24,8 +24,6 @@ var View = cc.Class.extend({
     filterCorrect: undefined,
     filterWrong: undefined,
 
-
-
     /**
      * Hide 2nd and 3rd rounds.
      */ 
@@ -37,17 +35,15 @@ var View = cc.Class.extend({
         this.screen = new Screen();
         this.rounds = this.parseRounds();
         this.backgroundClip = new BackgroundClip();
-        parent.addChild(backgroundClip);
+        parent.addChild(this.backgroundClip);
         this.backgroundClip.gotoAndPlay("begin");
-        parent.addChild(screen);
+        parent.addChild(this.screen);
         this.screen.gotoAndStop(1);
         this.screen.night.mouseChildren = false;
         this.screen.night.mouseEnabled = false;
         this.filterCorrect = new FilterCorrect().getChildAt(0).filters[0];
         this.filterWrong = new FilterWrong().getChildAt(0).filters[0];
     },
-
-
 
     /**
      * name_round.  Example:  TreeLeaves_0, TreeLeaves_1.
@@ -104,8 +100,6 @@ var View = cc.Class.extend({
         }
         return props;
     },
-
-
 
     /**
      * @return Index of MovieClip in screen.rounds.
@@ -181,19 +175,19 @@ var View = cc.Class.extend({
     end: function()
     {
         this.backgroundClip.gotoAndPlay("end");
-        this.screen.addFrameScript(screen.totalFrames - 1, this.screen.stop);
+        this.screen.addFrameScript(this.screen.totalFrames - 1, this.screen.stop);
     },
 
     hideScreen: function()
     {
         // cc.log("View.hideScreen");
-        if (reviewClip) {
-            remove(reviewClip);
+        if (this.reviewClip) {
+            View.remove(this.reviewClip);
             this.reviewClip.visible = false;
         }
         this.screen.stop();
         this.screen.visible = false;
-        remove(screen);
+        View.remove(this.screen);
     },
 
     populate: function(model)
@@ -204,13 +198,13 @@ var View = cc.Class.extend({
                 this.rounds[r][c].filters = [];
             }
         }
-        if (!model.complete) {
-            var previous = this.rounds[model.round][model.target];
+        if (!this.model.complete) {
+            var previous = this.rounds[this.model.round][this.model.target];
             previous.visible = false;
-            var current = this.rounds[model.round + 1][model.target];
+            var current = this.rounds[this.model.round + 1][this.model.target];
             current.visible = true;
-            if (model.trial < this.model.trialTutor) {
-                current.filters = [filterCorrect.clone()];
+            if (this.model.trial < this.model.trialTutor) {
+                current.filters = [this.filterCorrect.clone()];
                 current.filters[0].strength = 6.0 - 0.05 * this.model.referee.percent;
             }
         }
@@ -221,8 +215,8 @@ var View = cc.Class.extend({
         cc.log("View.review");
         this.screen.stop();
         this.reviewClip = new ReviewClip();
-        this.screen.addChild(reviewClip);
-        this.reviewClip.addFrameScript(reviewClip.totalFrames - 3, this.screen.play);
+        this.screen.addChild(this.reviewClip);
+        this.reviewClip.addFrameScript(this.reviewClip.totalFrames - 3, this.screen.play);
         this.screen.rounds.alpha = 0.0;
         this.reviewClip.count.text = this.model.referee.percent.toString() + "%";
         this.reviewClip.minutes.text = this.model.referee.minutes;
@@ -240,14 +234,14 @@ var View = cc.Class.extend({
 
     feedback: function(targetIndex, correct)
     {
-        var target = this.rounds[model.round][targetIndex];
+        var target = this.rounds[this.model.round][targetIndex];
         this.feedbackClip.x = target.x;
         this.feedbackClip.y = target.y;
-        target.parent.addChild(feedbackClip);
+        target.parent.addChild(this.feedbackClip);
         var label = correct ? "correct" : "wrong";
         this.feedbackClip.gotoAndPlay(label);
-        target.filters = correct ? [filterCorrect.clone()]
-                                    : [filterWrong.clone()];
+        target.filters = correct ? [this.filterCorrect.clone()]
+                                    : [this.filterWrong.clone()];
     },
 
     cancel: function()
@@ -273,7 +267,7 @@ var View = cc.Class.extend({
         this.clear();
         this.backgroundClip.stop();
         this.screen.stop();
-        remove(backgroundClip);
+        View.remove(this.backgroundClip);
     }
 });
 

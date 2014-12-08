@@ -229,8 +229,7 @@ def props(klassContent, inConstructor = False):
     >>> props('static  public var _ACTIVECOUNT:uint;')
     '    _ACTIVECOUNT: undefined,'
 
-    >>> print props('/** excluded */\nstatic public var _ACTIVECOUNT:uint;\n/** comment included */\npublic var x:int;')
-    <BLANKLINE>
+    >>> print props('/** excluded */\nstatic public var _ACTIVECOUNT:uint;\n\n\n/** comment included */\npublic var x:int;')
         /** comment included */
         x: undefined,
 
@@ -275,36 +274,49 @@ def props(klassContent, inConstructor = False):
     return str
 
 
+def _formatComment(blockComment):
+    if blockComment:
+        blockComment = _unescapeEnds(blockComment)
+        blockComment = indent(blockComment, 0)
+        blockComment = blockComment.lstrip()
+        blockComment += '\n'
+    return blockComment
+
 def _parseProps(klassContent, propP):
     escaped = _escapeEnds(klassContent)
     props = propP.findall(escaped)
     formatted = []
     for blockComment, name, dataType, definition in props:
-        if blockComment:
-            blockComment = _unescapeEnds(blockComment)
-            blockComment += '\n'
-            blockComment = indent(blockComment, 0)
+        blockComment = _formatComment(blockComment)
         formatted.append([blockComment, name, dataType,
             definition])
     return formatted
 
 
-def _parseFuncs(klassContent, methodP):
+def _parseFuncs(klassName, klassContent, methodP):
     """
     Preserve '&&'
     >>> klassContent = 'public static function no(){return 0 && 1}'
-    >>> funcs = _parseFuncs(klassContent, staticMethodP)
+    >>> funcs = _parseFuncs('Klass', klassContent, staticMethodP)
     >>> print funcs[0]['content']
         return 0 && 1
+
+    Scopes statics before instance members because instance pattern is sometimes greedy.
+    Do not prefix static reference.
+    >>> klassContent = 'public function Klass(){return Klass.NO}'
+    >>> funcs = _parseFuncs('Klass', klassContent, methodP)
+    >>> print funcs[0]['content']
+        return Klass.NO
     """
     escaped = _escapeEnds(klassContent)
     funcs = methodP.findall(escaped)
+    staticDeclarations = _findDeclarations(escaped, 
+        [staticPropP, staticMethodP])
+    instanceDeclarations = _findDeclarations(escaped, [
+        propP, methodP], excludes = staticDeclarations + [klassName])
     formatted = []
     for blockComment, name, argumentAS, content in funcs:
-        if blockComment:
-            blockComment = _unescapeEnds(blockComment)
-            blockComment += '\n'
-            blockComment = indent(blockComment, 0)
+        blockComment = _formatComment(blockComment)
         name = indent(name, 0)
         arguments = argumentP.findall(argumentAS)
         argumentsJS = []
@@ -315,6 +327,9 @@ def _parseFuncs(klassContent, methodP):
                 defaultArguments.append('if (undefined === ' + declaration + ') {')
                 defaultArguments.append(cfg.indent + declaration + definition + ';')
                 defaultArguments.append('}')
+        defaults = props(klassContent, True)
+        if defaults:
+            defaults = scopeMembers(instanceDeclarations, defaults, 'this')
         argumentText = ', '.join(argumentsJS)
         defaultArgumentText = '\n'.join(defaultArguments)
         if defaultArgumentText:
@@ -327,10 +342,13 @@ def _parseFuncs(klassContent, methodP):
             content = superClass(content)
         content = indent(content, 1)
         content = defaultArgumentText + content
+        content = scopeMembers(staticDeclarations, content, klassName)
+        content = scopeMembers(instanceDeclarations, content, 'this')
         formatted.append({'blockComment': blockComment, 
             'name': name, 
             'argumentText': argumentText, 
             'content': content, 
+            'defaults': defaults, 
             'defaultArguments': defaultArguments})
     return formatted
 
@@ -369,13 +387,16 @@ def _formatFunc(func, operator):
         + func['content'] + '\n}'
 
 
-def _findDeclarations(klassContent, propP):
-    props = propP.findall(klassContent)
+def _findDeclarations(klassContent, propPs, excludes = []):
     declarations = []
-    for comment, declaration, dataType, definition in props:
-        declarations.append(declaration)
+    for propP in propPs:
+        props = propP.findall(klassContent)
+        for comment, declaration, dataType, definition in props:
+            if declaration not in excludes:
+                if declaration not in declarations:
+                    declarations.append(declaration)
     return declarations
-
+    
 
 superClassP = re.compile(r'(\s+)super\s*(\()')
 
@@ -419,7 +440,7 @@ def exclude(list, exclusions):
     return included
 
 
-identifierP = re.compile(r'\s+(\w+)\b')
+identifierP = re.compile(r'[^\w\."\']+\b(\w+)\b')
 
 def scopeMembers(memberDeclarations, funcContent, scope):
     r"""
@@ -433,16 +454,29 @@ def scopeMembers(memberDeclarations, funcContent, scope):
     >>> print scopeMembers(['x', 'y', 'f'], 'var x:int = 0;\n//x += y;', 'FlxCamera')
     var x:int = 0;
     //x += FlxCamera.y;
+
+    Include not space at start, such as parenthesis or division sign.
+    >>> print scopeMembers(['x', 'y', 'f'], 'var x:int = 0;\nx += (y + 1)/y - FlxCamera.y;\ntrace("y "+y);', 'FlxCamera')
+    var x:int = 0;
+    x += (FlxCamera.y + 1)/FlxCamera.y - FlxCamera.y;
+    trace("y "+FlxCamera.y);
+
+    Careful replacement is unaware of quoted string context.
+    >>> print scopeMembers(['end'], 'gotoAndPlay("end");\ntrace("The end");', 'View')
+    gotoAndPlay("end");
+    trace("The View.end");
     """
     scoped = funcContent
     localDeclarations = _findLocalDeclarations(funcContent)
     memberDeclarations = exclude(memberDeclarations, localDeclarations)
     identifiers = identifierP.findall(funcContent)
-    memberIdentifiers = [identifier
-        for identifier in identifiers 
-            if identifier in memberDeclarations]
+    memberIdentifiers = []
+    for identifier in identifiers:
+        if identifier in memberDeclarations:
+            if identifier not in memberIdentifiers:
+                memberIdentifiers.append(identifier)
     for identifier in memberIdentifiers:
-        memberIdentifierP = re.compile(r'(\s+)(%s)\b' % identifier)
+        memberIdentifierP = re.compile(r'([^\w\."\']+)\b(%s)\b' % identifier)
         scoped = re.sub(memberIdentifierP, r'\1%s.\2' % scope, scoped)
     return scoped
 
@@ -465,7 +499,7 @@ def methods(klassName, klassContent):
     ['/** comment ~', '/** var ~']
 
     Arguments.  Convert default value.
-    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
+    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;\n\n\n\n/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
         /* var ~ */
         ctor: function(X, Y, Width, Height, Zoom)
         {
@@ -509,18 +543,24 @@ def methods(klassName, klassContent):
             this.x=X
             this.f()
         }
+
+    Reference to static property and function.
+    >>> print methods('PrefixStatics', 'public static var ID:int = 0;\n\nstatic public function f(){}\npublic function method(){\nID=1\nf()}')
+        method: function()
+        {
+            PrefixStatics.ID=1
+            PrefixStatics.f()
+        }
     """
-    funcs = _parseFuncs(klassContent, methodP)
+    funcs = _parseFuncs(klassName, klassContent, methodP)
     functionNames = [func['name'] for func in funcs]
-    declarations = _findDeclarations(klassContent, propP) + functionNames
     strs = []
     for func in funcs:
         if klassName == func['name']:
             func['name'] = 'ctor'
-            defaults = props(klassContent, True)
+            defaults = func['defaults']
             if defaults:
                 func['content'] = '\n' + defaults + func['content']
-        func['content'] = scopeMembers(declarations, func['content'], 'this')
         str = _formatFunc(func, ': ')
         str = indent(str, 1)
         strs.append(str)
@@ -538,7 +578,7 @@ def staticMethods(klassName, klassContent):
     ''
 
     Arguments.  Does not convert default value.
-    >>> print staticMethods('FlxCamera', '/** comment */\npublic static var x:int;private static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nf();\nx=X}')
+    >>> print staticMethods('FlxCamera', '/** comment */\npublic static var x:int;\nprivate static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nf();\nx=X}')
     FlxCamera.f = function()
     {
     }
@@ -574,13 +614,11 @@ def staticMethods(klassName, klassContent):
         function g(){}
     }
     """ 
-    funcs = _parseFuncs(klassContent, staticMethodP)
+    funcs = _parseFuncs(klassName, klassContent, staticMethodP)
     functionNames = [func['name'] for func in funcs]
-    declarations = _findDeclarations(klassContent, staticPropP) + functionNames
     strs = []
     for func in funcs:
         func['name'] = klassName + '.' + func['name']
-        func['content'] = scopeMembers(declarations, func['content'], klassName)
         str = _formatFunc(func, ' = ')
         strs.append(str)
     return '\n\n'.join(strs)
