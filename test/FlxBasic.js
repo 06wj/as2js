@@ -7,12 +7,47 @@
  * @author	Adam Atomic
  */
 var FlxBasic = cc.Class.extend({
+
+
+    /**
+     * IDs seem like they could be pretty useful, huh?
+     * They're not actually used for anything yet though.
+     */
     ID: undefined,
+
+    /**
+     * Controls whether <code>update()</code> and <code>draw()</code> are automatically called by FlxState/FlxGroup.
+     */
     exists: undefined,
+
+    /**
+     * Controls whether <code>update()</code> is automatically called by FlxState/FlxGroup.
+     */
     active: undefined,
+
+    /**
+     * Controls whether <code>draw()</code> is automatically called by FlxState/FlxGroup.
+     */
     visible: undefined,
+
+    /**
+     * Useful state for many game objects - "dead" (!alive) vs alive.
+     * <code>kill()</code> and <code>revive()</code> both flip this switch (along with exists, but you can override that).
+     */
     alive: undefined,
+
+    /**
+     * An array of camera objects that this object will use during <code>draw()</code>.
+     * This value will initialize itself during the first draw to automatically
+     * point at the main camera list out in <code>FlxG</code> unless you already set it.
+     * You can also change it afterward too, very flexible!
+     */
     cameras: undefined,
+
+    /**
+     * Setting this to true will prevent the object from appearing
+     * when the visual debug mode in the debugger overlay is toggled on.
+     */
     ignoreDrawDebug: undefined,
 
 

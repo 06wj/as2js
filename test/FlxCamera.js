@@ -15,39 +15,189 @@ require("flash/geom/Rectangle.js");
  * @author Adam Atomic
  */
 var FlxCamera = cc.Class.extend({
+
+
+    /**
+     * The X position of this camera's display.  Zoom does NOT affect this number.
+     * Measured in pixels from the left side of the flash window.
+     */
     x: undefined,
+
+    /**
+     * The Y position of this camera's display.  Zoom does NOT affect this number.
+     * Measured in pixels from the top of the flash window.
+     */
     y: undefined,
+
+    /**
+     * How wide the camera display is, in game pixels.
+     */
     width: undefined,
+
+    /**
+     * How tall the camera display is, in game pixels.
+     */
     height: undefined,
+
+    /**
+     * Tells the camera to follow this <code>FlxObject</code> object around.
+     */
     target: undefined,
+
+    /**
+     * You can assign a "dead zone" to the camera in order to better control its movement.
+     * The camera will always keep the focus object inside the dead zone,
+     * unless it is bumping up against the bounds rectangle's edges.
+     * The deadzone's coordinates are measured from the camera's upper left corner in game pixels.
+     * For rapid prototyping, you can use the preset deadzones (e.g. <code>STYLE_PLATFORMER</code>) with <code>follow()</code>.
+     */
     deadzone: undefined,
+
+    /**
+     * The edges of the camera's range, i.e. where to stop scrolling.
+     * Measured in game pixels and world coordinates.
+     */
     bounds: undefined,
+
+
+    /**
+     * Stores the basic parallax scrolling values.
+     */
     scroll: undefined,
+
+    /**
+     * The actual bitmap data of the camera display itself.
+     */
     buffer: undefined,
+
+    /**
+     * The natural background color of the camera. Defaults to FlxG.bgColor.
+     * NOTE: can be transparent for crazy FX!
+     */
     bgColor: undefined,
+
+    /**
+     * Sometimes it's easier to just work with a <code>FlxSprite</code> than it is to work
+     * directly with the <code>BitmapData</code> buffer.  This sprite reference will
+     * allow you to do exactly that.
+     */
     screen: undefined,
+
+
+    /**
+     * Indicates how far the camera is zoomed in.
+     */
     _zoom: undefined,
+
+    /**
+     * Internal, to help avoid costly allocations.
+     */
     _point: undefined,
+
+    /**
+     * Internal, help with color transforming the flash bitmap.
+     */
     _color: undefined,
+
+
+    /**
+     * Internal, used to render buffer to screen space.
+     */
     _flashBitmap: undefined,
+
+    /**
+     * Internal, used to render buffer to screen space.
+     */
     _flashSprite: undefined,
+
+    /**
+     * Internal, used to render buffer to screen space.
+     */
     _flashOffsetX: undefined,
+
+    /**
+     * Internal, used to render buffer to screen space.
+     */
     _flashOffsetY: undefined,
+
+    /**
+     * Internal, used to render buffer to screen space.
+     */
     _flashRect: undefined,
+
+    /**
+     * Internal, used to render buffer to screen space.
+     */
     _flashPoint: undefined,
+
+    /**
+     * Internal, used to control the "flash" special effect.
+     */
     _fxFlashColor: undefined,
+
+    /**
+     * Internal, used to control the "flash" special effect.
+     */
     _fxFlashDuration: undefined,
+
+    /**
+     * Internal, used to control the "flash" special effect.
+     */
     _fxFlashComplete: undefined,
+
+    /**
+     * Internal, used to control the "flash" special effect.
+     */
     _fxFlashAlpha: undefined,
+
+    /**
+     * Internal, used to control the "fade" special effect.
+     */
     _fxFadeColor: undefined,
+
+    /**
+     * Internal, used to control the "fade" special effect.
+     */
     _fxFadeDuration: undefined,
+
+    /**
+     * Internal, used to control the "fade" special effect.
+     */
     _fxFadeComplete: undefined,
+
+    /**
+     * Internal, used to control the "fade" special effect.
+     */
     _fxFadeAlpha: undefined,
+
+    /**
+     * Internal, used to control the "shake" special effect.
+     */
     _fxShakeIntensity: undefined,
+
+    /**
+     * Internal, used to control the "shake" special effect.
+     */
     _fxShakeDuration: undefined,
+
+    /**
+     * Internal, used to control the "shake" special effect.
+     */
     _fxShakeComplete: undefined,
+
+    /**
+     * Internal, used to control the "shake" special effect.
+     */
     _fxShakeOffset: undefined,
+
+    /**
+     * Internal, used to control the "shake" special effect.
+     */
     _fxShakeDirection: undefined,
+
+    /**
+     * Internal helper variable for doing better wipes/fills between renders.
+     */
     _fill: undefined,
 
 
@@ -555,12 +705,47 @@ var FlxCamera = cc.Class.extend({
     }
 });
 
+
+/**
+ * Camera "follow" style preset: camera has no deadzone, just tracks the focus object directly.
+ */
 var FlxCamera.STYLE_LOCKON = 0;
+
+/**
+ * Camera "follow" style preset: camera deadzone is narrow but tall.
+ */
 var FlxCamera.STYLE_PLATFORMER = 1;
+
+/**
+ * Camera "follow" style preset: camera deadzone is a medium-size square around the focus object.
+ */
 var FlxCamera.STYLE_TOPDOWN = 2;
+
+/**
+ * Camera "follow" style preset: camera deadzone is a small square around the focus object.
+ */
 var FlxCamera.STYLE_TOPDOWN_TIGHT = 3;
+
+
+/**
+ * Camera "shake" effect preset: shake camera on both the X and Y axes.
+ */
 var FlxCamera.SHAKE_BOTH_AXES = 0;
+
+/**
+ * Camera "shake" effect preset: shake camera on the X axis only.
+ */
 var FlxCamera.SHAKE_HORIZONTAL_ONLY = 1;
+
+/**
+ * Camera "shake" effect preset: shake camera on the Y axis only.
+ */
 var FlxCamera.SHAKE_VERTICAL_ONLY = 2;
+
+
+/**
+ * While you can alter the zoom of each camera after the fact,
+ * this variable determines what value the camera will start at when created.
+ */
 var FlxCamera.defaultZoom;
 

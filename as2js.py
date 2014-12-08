@@ -28,14 +28,28 @@ notStatic = '(?<!static\s)'
 staticNamespace = '(?:' + 'static\s+' + namespace \
                   + '|' + namespace + '\s+static' + ')'
 
-noteP = re.compile('\*\*([\t\r\n][\s\S]+?)\*/', re.S)
+argument = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
+argumentP =  re.compile(argument, re.S)
 
-staticPropP =  re.compile(staticNamespace
+commentEnd = '*/'
+commentEndEscape = '~'
+commentEndEscapeEscape = 'commentEndEscapeEscape'
+
+comment =  '/\*[^' + commentEndEscape + ']+' + commentEndEscape
+commentPrefix = '(\s*' + comment + '\s*)?'
+functionPrefix = commentPrefix + '(?:override\s+)?' 
+functionEnd = '}'
+functionEndEscape = '@'
+functionEndEscapeEscape = 'functionEndEscapeEscape'
+function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([^' + functionEndEscape + ']*?)' + functionEndEscape
+
+staticPropP =  re.compile(commentPrefix
+    + staticNamespace
     + '\s+' + localVariable, re.S)
 
 
 def staticProps(klassName, klassContent):
-    """
+    r"""
     Declared, defined variable without a space.
     >>> staticProps('FlxBasic', 'static internal var _VISIBLECOUNT:uint= 5;')
     'var FlxBasic._VISIBLECOUNT= 5;'
@@ -59,11 +73,24 @@ def staticProps(klassName, klassContent):
     Constant.
     >>> staticProps('FlxBasic', 'public static const ACTIVECOUNT:uint;')
     'var FlxBasic.ACTIVECOUNT;'
+
+    Block comment.
+    >>> print staticProps('FlxBasic', '/* how many */\npublic static const ACTIVECOUNT:uint;')
+    /* how many */
+    var FlxBasic.ACTIVECOUNT;
+
+    Block comment.
+    >>> print staticProps('FlxBasic', '/* not me */\npublic const NOTME:uint;/* how many */\npublic static const ACTIVECOUNT:uint;')
+    /* how many */
+    var FlxBasic.ACTIVECOUNT;
     """
-    staticProps = staticPropP.findall(klassContent)
+    staticProps = _parseProps(klassContent, staticPropP)
     strs = []
-    for name, dataType, definition in staticProps:
-        line = 'var ' + klassName + '.' + name + definition + ';'
+    for comment, name, dataType, definition in staticProps:
+        line = ''
+        if comment:
+            line = comment
+        line += 'var ' + klassName + '.' + name + definition + ';'
         strs.append(line)
     return '\n'.join(strs)
 
@@ -100,7 +127,10 @@ def _escapeFunctionEnd(klassContent):
 
 
 def _escapeEnds(original):
-    """Comment, function end."""
+    """Comment, function end.
+    Escape comment end, because non-greedy becomes greedy in context.  Example:
+    blockCommentNonGreedy = '(\s*/\*[\s\S]+?\*/\s*){0,1}?'
+    """
     commentEscaped = original \
         .replace(commentEndEscape, commentEndEscapeEscape) \
         .replace(commentEnd, commentEndEscape)
@@ -174,7 +204,8 @@ def localVariables(funcContent):
 #                       private                     var    a       :  int
 
 # http://revxatlarge.blogspot.com/2011/05/regular-expressions-excluding-strings.html
-propP =  re.compile(notStatic
+propP =  re.compile(commentPrefix
+    + notStatic
     + namespace + '\s+' + localVariable, re.S)
 
 
@@ -191,21 +222,32 @@ def props(klassContent, inConstructor = False):
     Exclude static if exactly one space, because lookbehind only supports fixed-width
     >>> props('public var _ACTIVECOUNT:uint;')
     '    _ACTIVECOUNT: undefined,'
-    >>> props('static public var _ACTIVECOUNT:uint;')
+    >>> props('/** comment */\nstatic public var _ACTIVECOUNT:uint;')
     ''
     >>> props('public static var _ACTIVECOUNT:uint;')
     ''
     >>> props('static  public var _ACTIVECOUNT:uint;')
     '    _ACTIVECOUNT: undefined,'
 
+    >>> print props('/** excluded */\nstatic public var _ACTIVECOUNT:uint;\n/** comment included */\npublic var x:int;')
+    <BLANKLINE>
+        /** comment included */
+        x: undefined,
+
     Exclude undefined, indented twice.
     >>> props('public var ID:int = 1;\npublic var exists:Boolean;',
     ...     inConstructor = True)
     '    ID = 1;'
+
+    Preserve block comment, if not in constructor.
+    >>> print props('/** active */\n\npublic var _ACTIVECOUNT:uint;')
+        /** active */
+    <BLANKLINE>
+        _ACTIVECOUNT: undefined,
     """
-    props = propP.findall(klassContent)
+    props = _parseProps(klassContent, propP)
     strs = []
-    for declaration, dataType, definition in props:
+    for comment, declaration, dataType, definition in props:
         if definition:
             if not inConstructor:
                 definition = definition.replace(' =', ':').replace('=', ':')
@@ -213,7 +255,11 @@ def props(klassContent, inConstructor = False):
         else:
             definition = ': undefined'
             include = False
-        line = declaration + definition
+        line = ''
+        if not inConstructor:
+            if comment:
+                line = comment
+        line += declaration + definition
         if not inConstructor or include:
             strs.append(line)
     str = ''
@@ -229,20 +275,18 @@ def props(klassContent, inConstructor = False):
     return str
 
 
-argument = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
-argumentP =  re.compile(argument, re.S)
-
-commentEnd = '*/'
-commentEndEscape = '~'
-commentEndEscapeEscape = 'commentEndEscapeEscape'
-
-comment =  '/\*[^' + commentEndEscape + ']+' + commentEndEscape
-commentPrefix = '(\s*' + comment + '\s*)'
-functionPrefix = commentPrefix + '{0,1}' + '(?:override\s+)?' 
-functionEnd = '}'
-functionEndEscape = '@'
-functionEndEscapeEscape = 'functionEndEscapeEscape'
-function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([^' + functionEndEscape + ']*?)' + functionEndEscape
+def _parseProps(klassContent, propP):
+    escaped = _escapeEnds(klassContent)
+    props = propP.findall(escaped)
+    formatted = []
+    for blockComment, name, dataType, definition in props:
+        if blockComment:
+            blockComment = _unescapeEnds(blockComment)
+            blockComment += '\n'
+            blockComment = indent(blockComment, 0)
+        formatted.append([blockComment, name, dataType,
+            definition])
+    return formatted
 
 
 def _parseFuncs(klassContent, methodP):
@@ -260,7 +304,7 @@ def _parseFuncs(klassContent, methodP):
         if blockComment:
             blockComment = _unescapeEnds(blockComment)
             blockComment += '\n'
-        blockComment = indent(blockComment, 0)
+            blockComment = indent(blockComment, 0)
         name = indent(name, 0)
         arguments = argumentP.findall(argumentAS)
         argumentsJS = []
@@ -328,7 +372,7 @@ def _formatFunc(func, operator):
 def _findDeclarations(klassContent, propP):
     props = propP.findall(klassContent)
     declarations = []
-    for declaration, dataType, definition in props:
+    for comment, declaration, dataType, definition in props:
         declarations.append(declaration)
     return declarations
 

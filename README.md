@@ -69,12 +69,12 @@ Features
 
  * Preserve class comment.
 
+ * Preserve variable comment.
+
 Not supported
 =============
 
 Vim commands are listed for some of these manual translations.
-
- * Preserve variable comment.
 
  * Extending a base class other than the configuration baseClass.
 
