@@ -9,6 +9,11 @@ require("flash/geom/Point.js");
 require("flash/geom/Rectangle.js");
 require("flash/events/MouseEvent.js");
 
+
+
+/**
+ * By Ethan Kennerly
+ */
 var View = cc.Class.extend({
     feedbackClip: undefined,
     model: null,
@@ -84,7 +89,7 @@ var View = cc.Class.extend({
                     if (name != name0) {
                         throw new Error("Expected name prefixes same.");
                     }
-                    trace("View.parseRound: " + name + " round " + r);
+                    cc.log("View.parseRound: " + name + " round " + r);
                 }
             }
         }
@@ -112,7 +117,7 @@ var View = cc.Class.extend({
         var hits = this.screen.rounds.getObjectsUnderPoint(point);
         var found;
         if (debugHit) {
-            trace("View.indexOf: " + hits);
+            cc.log("View.indexOf: " + hits);
         }
         for (var h = hits.length - 1; 0 <= h; h--) {
             found = null;
@@ -138,7 +143,7 @@ var View = cc.Class.extend({
                     var bm = new Bitmap(bmp);
                     this.screen.addChild(bm);
                     if (found) {
-                        trace("    name: " + found.name + " point " + p 
+                        cc.log("    name: " + found.name + " point " + p 
                             + " rect " + rect + " pixel " + pixel.toString(16));
                     }
                     var color = 0x0000FF;
@@ -161,7 +166,7 @@ var View = cc.Class.extend({
             }
         }
         if (found) {
-            trace("found: " + found.name);
+            cc.log("found: " + found.name);
         }
         var index = -1;
         for (var r = 0; r < this.rounds.length; r++) {
@@ -181,7 +186,7 @@ var View = cc.Class.extend({
 
     hideScreen: function()
     {
-        // trace("View.hideScreen");
+        // cc.log("View.hideScreen");
         if (reviewClip) {
             remove(reviewClip);
             this.reviewClip.visible = false;
@@ -213,7 +218,7 @@ var View = cc.Class.extend({
 
     review: function()
     {
-        trace("View.review");
+        cc.log("View.review");
         this.screen.stop();
         this.reviewClip = new ReviewClip();
         this.screen.addChild(reviewClip);

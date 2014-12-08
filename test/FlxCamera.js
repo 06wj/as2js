@@ -5,6 +5,15 @@ require("flash/geom/ColorTransform.js");
 require("flash/geom/Point.js");
 require("flash/geom/Rectangle.js");
 
+
+
+/**
+ * The camera class is used to display the game's visuals in the Flash player.
+ * By default one camera is created automatically, that is the same size as the Flash player.
+ * You can add more cameras or even replace the main camera using utilities in <code>FlxG</code>.
+ * 
+ * @author Adam Atomic
+ */
 var FlxCamera = cc.Class.extend({
     x: undefined,
     y: undefined,

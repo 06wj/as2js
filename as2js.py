@@ -237,7 +237,8 @@ commentEndEscape = '~'
 commentEndEscapeEscape = 'commentEndEscapeEscape'
 
 comment =  '/\*[^' + commentEndEscape + ']+' + commentEndEscape
-functionPrefix = '(\s*' + comment + '\s+){0,1}(?:override\s+)?' 
+commentPrefix = '(\s*' + comment + '\s*)'
+functionPrefix = commentPrefix + '{0,1}' + '(?:override\s+)?' 
 functionEnd = '}'
 functionEndEscape = '@'
 functionEndEscapeEscape = 'functionEndEscapeEscape'
@@ -278,6 +279,8 @@ def _parseFuncs(klassContent, methodP):
             content = ''
         else:
             content = localVariables(content)
+            content = trace(content)
+            content = superClass(content)
         content = indent(content, 1)
         content = defaultArgumentText + content
         formatted.append({'blockComment': blockComment, 
@@ -328,6 +331,28 @@ def _findDeclarations(klassContent, propP):
     for declaration, dataType, definition in props:
         declarations.append(declaration)
     return declarations
+
+
+superClassP = re.compile(r'(\s+)super\s*(\()')
+
+def superClass(funcContent):
+    r"""Does not support call to another function.
+    >>> print superClass('var a; super(a);\nsuper.f(1)');
+    var a; this._super(a);
+    super.f(1)
+    """
+    return re.sub(superClassP, r'\1' + cfg.superClass + r'\2', funcContent)
+
+
+traceP = re.compile(r'(\s+)trace\s*(\()')
+
+def trace(funcContent):
+    r"""
+    >>> print trace('var a; trace(a);\ntrace(1)');
+    var a; cc.log(a);
+    cc.log(1)
+    """
+    return re.sub(traceP, r'\1' + cfg.log + r'\2', funcContent)
 
 
 def _findLocalDeclarations(funcContent):
@@ -536,15 +561,55 @@ def requires(text):
 
 
 #                     package   org.pkg   {       class   ClasA    extends   Clas{        }}
-klassP =  re.compile('package\s+[\w\.]+\s+{[\s\S]*class\s+(\w+)\s+(?:extends\s+\w+\s+)?{([\s\S]+)}\s*}', re.S)
+klassCommentP =  re.compile('package\s*[\w\.]*\s*{[\s\S]*?' 
+    + commentPrefix
+    + namespace + '?\s*' + '(?:\s+final\s+)?'
+    + 'class\s+\w+', re.S)
+
+klassP =  re.compile('package\s*[\w\.]*\s*{[\s\S]*' 
+    + 'class\s+(\w+)' 
+    + '(?:\s+extends\s+\w+\s*)?\s*{([\s\S]*)}\s*}', re.S)
+
+def findClassAndContent(text):
+    r"""Return (blockComment, name, content)
+    >>> findClassAndContent('package{\nclass Newline\n{}\n}')
+    ['', 'Newline', '']
+
+    Line comment not preserved.
+    >>> findClassAndContent('package{class Oneline{}}')
+    ['', 'Oneline', '']
+
+    Line comment not preserved.
+    >>> findClassAndContent('package{// line\nclass LineComment{}}')
+    ['', 'LineComment', '']
+
+    Block comment preserved.
+    >>> findClassAndContent('package{/*comment*/public final class BlockComment{}}')
+    ['/*comment*/', 'BlockComment', '']
+    """
+    escaped = _escapeEnds(text)
+    # print escaped
+    comments = klassCommentP.findall(escaped)
+    nameContents = klassP.findall(text)
+    if nameContents:
+        commentNameContents = []
+        if comments and comments[0]:
+            comments[0] = _unescapeEnds(comments[0])
+            commentNameContents.append(comments[0])
+        else:
+            commentNameContents.append('')
+        commentNameContents.append(nameContents[0][0])
+        commentNameContents.append(nameContents[0][1])
+        return commentNameContents
+
 
 def convert(text):
-    klass = klassP.findall(text)[0]
-    klassName = klass[0]
-    klassContent = klass[1]
+    klassComment, klassName, klassContent = findClassAndContent(text)
 
     str = '';
     str += requires(text)
+    if klassComment:
+        str += indent(klassComment, 0) + '\n'
     str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' 
     str += '\n' + props(klassContent) 
     str += '\n\n' + methods(klassName, klassContent)
