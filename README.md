@@ -94,6 +94,7 @@ Vim commands are listed for some of these manual translations.
 
  * Type casting with "as" operator.  Typecasting with MyType(variable) syntax.  Replace with "instanceof".
 
+    :lvimgrep / int(/ *.as
     :lvimgrep / as / *.js
 
  * Preserve line comment before a member variable or function.

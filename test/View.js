@@ -192,20 +192,20 @@ var View = cc.Class.extend({
 
     populate: function(model)
     {
-        this.model = this.model;
+        this.model = model;
         for (var r = 0; r < this.rounds.length; r++) {
             for (var c = 0; c < this.rounds[r].length; c++) {
                 this.rounds[r][c].filters = [];
             }
         }
-        if (!this.model.complete) {
-            var previous = this.rounds[this.model.round][this.model.target];
+        if (!model.complete) {
+            var previous = this.rounds[model.round][model.target];
             previous.visible = false;
-            var current = this.rounds[this.model.round + 1][this.model.target];
+            var current = this.rounds[model.round + 1][model.target];
             current.visible = true;
-            if (this.model.trial < this.model.trialTutor) {
+            if (model.trial < model.trialTutor) {
                 current.filters = [this.filterCorrect.clone()];
-                current.filters[0].strength = 6.0 - 0.05 * this.model.referee.percent;
+                current.filters[0].strength = 6.0 - 0.05 * model.referee.percent;
             }
         }
     },

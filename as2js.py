@@ -293,27 +293,45 @@ def _parseProps(klassContent, propP):
     return formatted
 
 
-def _parseFuncs(klassName, klassContent, methodP):
-    """
+def _parseFuncs(klassName, klassContent, funcP, instance = True):
+    r"""
     Preserve '&&'
     >>> klassContent = 'public static function no(){return 0 && 1}'
-    >>> funcs = _parseFuncs('Klass', klassContent, staticMethodP)
+    >>> funcs = _parseFuncs('Klass', klassContent, staticMethodP, False)
     >>> print funcs[0]['content']
         return 0 && 1
 
-    Scopes statics before instance members because instance pattern is sometimes greedy.
     Do not prefix static reference.
     >>> klassContent = 'public function Klass(){return Klass.NO}'
     >>> funcs = _parseFuncs('Klass', klassContent, methodP)
     >>> print funcs[0]['content']
         return Klass.NO
+
+    Instance scope before static scope.
+    >>> klassContent = 'public var score;\npublic static function score(){};\npublic function f(){return score;}'
+    >>> funcs = _parseFuncs('Klass', klassContent, methodP)
+    >>> print funcs[0]['content']
+        return this.score;
+
+    Static cannot refer to instance.
+    >>> klassContent = 'public var score;\npublic static function score(){};\npublic static function f(){return score;}'
+    >>> funcs = _parseFuncs('Klass', klassContent, staticMethodP, False)
+    >>> print funcs[1]['content']
+        return Klass.score;
+
+    Do not prefix argument.
+    >>> klassContent = 'public static var score;\npublic static function f(score){return score;}'
+    >>> funcs = _parseFuncs('Klass', klassContent, staticMethodP, False)
+    >>> print funcs[0]['content']
+        return score;
     """
     escaped = _escapeEnds(klassContent)
-    funcs = methodP.findall(escaped)
+    funcs = funcP.findall(escaped)
     staticDeclarations = _findDeclarations(escaped, 
         [staticPropP, staticMethodP])
-    instanceDeclarations = _findDeclarations(escaped, [
-        propP, methodP], excludes = staticDeclarations + [klassName])
+    if instance:
+        instanceDeclarations = _findDeclarations(escaped, [
+            propP, methodP], excludes = [klassName])
     formatted = []
     for blockComment, name, argumentAS, content in funcs:
         blockComment = _formatComment(blockComment)
@@ -321,15 +339,23 @@ def _parseFuncs(klassName, klassContent, methodP):
         arguments = argumentP.findall(argumentAS)
         argumentsJS = []
         defaultArguments = []
+        argumentDeclarations = []
         for declaration, dataType, definition in arguments:
+            if declaration not in argumentDeclarations:
+                argumentDeclarations.append(declaration)
             argumentsJS.append(declaration)
             if definition:
                 defaultArguments.append('if (undefined === ' + declaration + ') {')
                 defaultArguments.append(cfg.indent + declaration + definition + ';')
                 defaultArguments.append('}')
-        defaults = props(klassContent, True)
-        if defaults:
-            defaults = scopeMembers(instanceDeclarations, defaults, 'this')
+        if instance:
+            thisInstanceDeclarations = exclude(instanceDeclarations, argumentDeclarations)
+        thisStaticDeclarations = exclude(staticDeclarations, argumentDeclarations)
+        defaults = ''
+        if instance:
+            defaults = props(klassContent, True)
+            if defaults:
+                defaults = scopeMembers(thisInstanceDeclarations, defaults, 'this')
         argumentText = ', '.join(argumentsJS)
         defaultArgumentText = '\n'.join(defaultArguments)
         if defaultArgumentText:
@@ -342,8 +368,9 @@ def _parseFuncs(klassName, klassContent, methodP):
             content = superClass(content)
         content = indent(content, 1)
         content = defaultArgumentText + content
-        content = scopeMembers(staticDeclarations, content, klassName)
-        content = scopeMembers(instanceDeclarations, content, 'this')
+        if instance:
+            content = scopeMembers(thisInstanceDeclarations, content, 'this')
+        content = scopeMembers(thisStaticDeclarations, content, klassName)
         formatted.append({'blockComment': blockComment, 
             'name': name, 
             'argumentText': argumentText, 
@@ -578,7 +605,7 @@ def staticMethods(klassName, klassContent):
     ''
 
     Arguments.  Does not convert default value.
-    >>> print staticMethods('FlxCamera', '/** comment */\npublic static var x:int;\nprivate static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nf();\nx=X}')
+    >>> print staticMethods('FlxCamera', '/** comment */\npublic var x:int;\npublic static var x:int;\nprivate static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nf();\nx=X}')
     FlxCamera.f = function()
     {
     }
@@ -614,7 +641,7 @@ def staticMethods(klassName, klassContent):
         function g(){}
     }
     """ 
-    funcs = _parseFuncs(klassName, klassContent, staticMethodP)
+    funcs = _parseFuncs(klassName, klassContent, staticMethodP, False)
     functionNames = [func['name'] for func in funcs]
     strs = []
     for func in funcs:
