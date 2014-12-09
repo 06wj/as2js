@@ -109,6 +109,10 @@ Vim commands are listed for some of these manual translations.
 
     :lvimgrep /^        \/\/ / *.as
 
+ * Integer constants, such as "int.MIN\_VALUE"
+
+    :lvimgrep /\<int\./ *.as
+
  * Auto prefix private variables with underscore.
 
     :args *.as

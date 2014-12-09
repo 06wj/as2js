@@ -21,7 +21,9 @@ var = 'var'
 varKeyword = r'(?:\bvar\b|\bconst\b)'
 varEscape = '&'
 varEscapeEscape = '<varEscapeEscape>'
-localVariable = varKeyword + '\s+' + argument + ';?'
+notStatement = '[^;]+'
+assignment = '(\w+)\s*(:\w+)?(\s*=\s*' + notStatement + ')?'
+localVariable = varKeyword + '\s+' + assignment + ';?'
 localVariableEscaped = '(' + varEscape + '\s+)' + argument
 
 namespace = '(?:private|protected|public|internal)'
@@ -57,9 +59,11 @@ def staticProps(klassName, klassContent):
     >>> staticProps('FlxBasic', 'static internal var _ACTIVECOUNT:uint;')
     'FlxBasic._ACTIVECOUNT;'
 
-    Namespace first
-    >>> staticProps('FlxBasic', 'private static var _VISIBLECOUNT:uint= 5;')
-    'FlxBasic._VISIBLECOUNT= 5;'
+    Namespace first. 
+    Defining an array of objects and an inline comment.
+    >>> print staticProps('View', 'private static var items:Array=[{a: 1},//1\n{b: 2}];')
+    View.items=[{a: 1},//1
+    {b: 2}];
 
     Declared, undefined variable.
     >>> staticProps('FlxBasic', 'public static var _ACTIVECOUNT:uint;')
@@ -83,7 +87,7 @@ def staticProps(klassName, klassContent):
     /* how many */
     FlxBasic.ACTIVECOUNT;
     """
-    staticProps = _parseProps(klassContent, staticPropP)
+    staticProps = _parseProps(klassName, klassContent, staticPropP)
     strs = []
     for comment, name, dataType, definition in staticProps:
         line = ''
@@ -208,14 +212,15 @@ propP =  re.compile(commentPrefix
     + namespace + '\s+' + localVariable, re.S)
 
 
-def props(klassContent, inConstructor = False):
+def props(klassContent, inConstructor = False, klassName = ''):
     r"""As object members, indented by 4-spaces, with trailing comma.
     Undefined.
     >>> props('  public var ID:int;\n        public var exists:Boolean;')
     '    ID: undefined,\n    exists: undefined,'
 
     Defined.
-    >>> props('    public var ID:int = 1;\n    public var exists:Boolean = FlxBasic._ACTIVECOUNT;')
+    Auto-prepend class name to static.
+    >>> props('private static const _ACTIVECOUNT;    public var ID:int = 1;\n    public var exists:Boolean = _ACTIVECOUNT;', klassName = 'FlxBasic')
     '    ID: 1,\n    exists: FlxBasic._ACTIVECOUNT,'
 
     Exclude static if exactly one space, because lookbehind only supports fixed-width
@@ -243,7 +248,7 @@ def props(klassContent, inConstructor = False):
     <BLANKLINE>
         _ACTIVECOUNT: undefined,
     """
-    props = _parseProps(klassContent, propP)
+    props = _parseProps(klassName, klassContent, propP)
     strs = []
     for comment, declaration, dataType, definition in props:
         if definition:
@@ -281,12 +286,17 @@ def _formatComment(blockComment):
         blockComment += '\n'
     return blockComment
 
-def _parseProps(klassContent, propP):
+
+def _parseProps(klassName, klassContent, funcP):
     escaped = _escapeEnds(klassContent)
-    props = propP.findall(escaped)
+    props = funcP.findall(escaped)
     formatted = []
+    staticDeclarations = _findDeclarations(escaped, 
+        [staticPropP, staticMethodP])
     for blockComment, name, dataType, definition in props:
         blockComment = _formatComment(blockComment)
+        definition = _unescapeEnds(definition)
+        definition = scopeMembers(staticDeclarations, definition, klassName)
         formatted.append([blockComment, name, dataType,
             definition])
     return formatted
@@ -352,7 +362,7 @@ def _parseFuncs(klassName, klassContent, funcP, instance = True):
         thisStaticDeclarations = exclude(staticDeclarations, argumentDeclarations)
         defaults = ''
         if instance:
-            defaults = props(klassContent, True)
+            defaults = props(klassContent, True, klassName)
             if defaults:
                 defaults = scopeMembers(thisInstanceDeclarations, defaults, 'this')
         argumentText = ', '.join(argumentsJS)
@@ -743,7 +753,7 @@ def convert(text):
     if klassComment:
         str += indent(klassComment, 0) + '\n'
     str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend(\n{' 
-    str += '\n' + props(klassContent) 
+    str += '\n' + props(klassContent, False, klassName) 
     str += '\n\n' + methods(klassName, klassContent)
     str += '\n});'
     str += '\n\n' + staticProps(klassName, klassContent)
