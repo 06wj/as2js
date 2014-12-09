@@ -154,6 +154,6 @@ var FlxBasic = cc.Class.extend(
     }
 });
 
-var FlxBasic._ACTIVECOUNT;
-var FlxBasic._VISIBLECOUNT;
+FlxBasic._ACTIVECOUNT;
+FlxBasic._VISIBLECOUNT;
 

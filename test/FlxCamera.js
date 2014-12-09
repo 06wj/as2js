@@ -642,34 +642,34 @@ var FlxCamera = cc.Class.extend(
 /**
  * Camera "follow" style preset: camera has no deadzone, just tracks the focus object directly.
  */
-var FlxCamera.STYLE_LOCKON = 0;
+FlxCamera.STYLE_LOCKON = 0;
 /**
  * Camera "follow" style preset: camera deadzone is narrow but tall.
  */
-var FlxCamera.STYLE_PLATFORMER = 1;
+FlxCamera.STYLE_PLATFORMER = 1;
 /**
  * Camera "follow" style preset: camera deadzone is a medium-size square around the focus object.
  */
-var FlxCamera.STYLE_TOPDOWN = 2;
+FlxCamera.STYLE_TOPDOWN = 2;
 /**
  * Camera "follow" style preset: camera deadzone is a small square around the focus object.
  */
-var FlxCamera.STYLE_TOPDOWN_TIGHT = 3;
+FlxCamera.STYLE_TOPDOWN_TIGHT = 3;
 /**
  * Camera "shake" effect preset: shake camera on both the X and Y axes.
  */
-var FlxCamera.SHAKE_BOTH_AXES = 0;
+FlxCamera.SHAKE_BOTH_AXES = 0;
 /**
  * Camera "shake" effect preset: shake camera on the X axis only.
  */
-var FlxCamera.SHAKE_HORIZONTAL_ONLY = 1;
+FlxCamera.SHAKE_HORIZONTAL_ONLY = 1;
 /**
  * Camera "shake" effect preset: shake camera on the Y axis only.
  */
-var FlxCamera.SHAKE_VERTICAL_ONLY = 2;
+FlxCamera.SHAKE_VERTICAL_ONLY = 2;
 /**
  * While you can alter the zoom of each camera after the fact,
  * this variable determines what value the camera will start at when created.
  */
-var FlxCamera.defaultZoom;
+FlxCamera.defaultZoom;
 

@@ -52,19 +52,19 @@ def staticProps(klassName, klassContent):
     r"""
     Declared, defined variable without a space.
     >>> staticProps('FlxBasic', 'static internal var _VISIBLECOUNT:uint= 5;')
-    'var FlxBasic._VISIBLECOUNT= 5;'
+    'FlxBasic._VISIBLECOUNT= 5;'
 
     Declared, undefined variable.
     >>> staticProps('FlxBasic', 'static internal var _ACTIVECOUNT:uint;')
-    'var FlxBasic._ACTIVECOUNT;'
+    'FlxBasic._ACTIVECOUNT;'
 
     Namespace first
     >>> staticProps('FlxBasic', 'private static var _VISIBLECOUNT:uint= 5;')
-    'var FlxBasic._VISIBLECOUNT= 5;'
+    'FlxBasic._VISIBLECOUNT= 5;'
 
     Declared, undefined variable.
     >>> staticProps('FlxBasic', 'public static var _ACTIVECOUNT:uint;')
-    'var FlxBasic._ACTIVECOUNT;'
+    'FlxBasic._ACTIVECOUNT;'
 
     No namespace not supported.
     >>> staticProps('FlxBasic', 'static var _ACTIVECOUNT:uint;')
@@ -72,17 +72,17 @@ def staticProps(klassName, klassContent):
 
     Constant.
     >>> staticProps('FlxBasic', 'public static const ACTIVECOUNT:uint;')
-    'var FlxBasic.ACTIVECOUNT;'
+    'FlxBasic.ACTIVECOUNT;'
 
     Block comment.
     >>> print staticProps('FlxBasic', '/* how many */\npublic static const ACTIVECOUNT:uint;')
     /* how many */
-    var FlxBasic.ACTIVECOUNT;
+    FlxBasic.ACTIVECOUNT;
 
     Block comment.
     >>> print staticProps('FlxBasic', '/* not me */\npublic const NOTME:uint;/* how many */\npublic static const ACTIVECOUNT:uint;')
     /* how many */
-    var FlxBasic.ACTIVECOUNT;
+    FlxBasic.ACTIVECOUNT;
     """
     staticProps = _parseProps(klassContent, staticPropP)
     strs = []
@@ -90,7 +90,7 @@ def staticProps(klassName, klassContent):
         line = ''
         if comment:
             line = comment
-        line += 'var ' + klassName + '.' + name + definition + ';'
+        line += klassName + '.' + name + definition + ';'
         strs.append(line)
     return '\n'.join(strs)
 
@@ -760,6 +760,14 @@ def convertFiles(asPaths):
         jsPath = root + '.js'
         convertFile(asPath, jsPath)
 
+def _testCfg():
+    """Override cfg.  Tests expect indent 4-spaces.
+    """
+    cfg.indent = '    '
+    cfg.log = 'cc.log'
+    import doctest
+    doctest.testmod()
+
 
 if '__main__' == __name__:
     import sys
@@ -767,8 +775,4 @@ if '__main__' == __name__:
         print __doc__
     if 2 <= len(sys.argv) and '--test' != sys.argv[1]:
         convertFiles(sys.argv[1:])
-    # Tests expect indent 4-spaces.
-    cfg.indent = '    '
-    import doctest
-    doctest.testmod()
-
+    _testCfg()
