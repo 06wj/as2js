@@ -766,6 +766,13 @@ def convertFiles(asPaths):
         jsPath = root + '.js'
         convertFile(asPath, jsPath)
 
+def realpath(path):
+    """
+    http://stackoverflow.com/questions/4934806/python-how-to-find-scripts-directory
+    """
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
+
+
 def _testCfg():
     """Overrides cfg, so perform this after all operations.
     Tests expect indent 4-spaces.
@@ -773,8 +780,11 @@ def _testCfg():
     cfg.indent = '    '
     cfg.log = 'cc.log'
     cfg.requireSubs = [['flash/display', 'src/View']]
+    cfg.superClass = 'this._super'
     import doctest
     doctest.testmod()
+    import glob
+    convertFiles(glob.glob(realpath('test/*.as')))
 
 
 if '__main__' == __name__:

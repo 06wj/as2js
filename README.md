@@ -73,6 +73,8 @@ Features
 
  * Configure substitute require paths.
 
+ * Override default configurations.
+
 Not supported
 =============
 

@@ -1,9 +1,9 @@
 /*jslint node: true */
 "use strict";
 
-require("flash/display/Bitmap.js");
-require("flash/display/BitmapData.js");
-require("flash/display/Sprite.js");
+require("src/View/Bitmap.js");
+require("src/View/BitmapData.js");
+require("src/View/Sprite.js");
 require("flash/geom/ColorTransform.js");
 require("flash/geom/Point.js");
 require("flash/geom/Rectangle.js");
