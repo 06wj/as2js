@@ -15,20 +15,19 @@ import textwrap
 
 import as2js_cfg as cfg
 
-namespace = '(?:private|protected|public|internal)'
-argumentSave = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
-
+literal = '[\w\-\."\']+'
+argument = '(\w+)\s*(:\w+)?(\s*=\s*' + literal + ')?'
 var = 'var'
 varKeyword = r'(?:\bvar\b|\bconst\b)'
 varEscape = '&'
 varEscapeEscape = '<varEscapeEscape>'
-localVariable = varKeyword + '\s+' + argumentSave + ';?'
-localVariableEscaped = '(' + varEscape + '\s+)' + argumentSave
+localVariable = varKeyword + '\s+' + argument + ';?'
+localVariableEscaped = '(' + varEscape + '\s+)' + argument
+
+namespace = '(?:private|protected|public|internal)'
 notStatic = '(?<!static\s)'
 staticNamespace = '(?:' + 'static\s+' + namespace \
                   + '|' + namespace + '\s+static' + ')'
-literal = '[\w\-\."\']+'
-argument = '(\w+)\s*(:\w+)?(\s*=\s*' + literal + ')?'
 argumentP =  re.compile(argument, re.S)
 
 commentEnd = '*/'
@@ -216,8 +215,8 @@ def props(klassContent, inConstructor = False):
     '    ID: undefined,\n    exists: undefined,'
 
     Defined.
-    >>> props('    public var ID:int = 1;\n    public var exists:Boolean = true;')
-    '    ID: 1,\n    exists: true,'
+    >>> props('    public var ID:int = 1;\n    public var exists:Boolean = FlxBasic._ACTIVECOUNT;')
+    '    ID: 1,\n    exists: FlxBasic._ACTIVECOUNT,'
 
     Exclude static if exactly one space, because lookbehind only supports fixed-width
     >>> props('public var _ACTIVECOUNT:uint;')
@@ -768,10 +767,12 @@ def convertFiles(asPaths):
         convertFile(asPath, jsPath)
 
 def _testCfg():
-    """Override cfg.  Tests expect indent 4-spaces.
+    """Overrides cfg, so perform this after all operations.
+    Tests expect indent 4-spaces.
     """
     cfg.indent = '    '
     cfg.log = 'cc.log'
+    cfg.requireSubs = [['flash/display', 'src/View']]
     import doctest
     doctest.testmod()
 
