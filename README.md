@@ -75,6 +75,12 @@ Features
 
  * Override default configurations.
 
+ * Remove data type from Try/catch.
+
+ * Simple type casting with "as" operator.  
+ 
+ * Simple pattern of "is" into "instanceof".
+
 Not supported
 =============
 
@@ -95,15 +101,9 @@ Vim commands are listed for some of these manual translations.
 
     :lvimgrep /\<super\>/ *.as
 
- * Translate "is" into "instanceof".
-
-    :args *.js
-    :argdo %s/\<is\>/instanceof/gIce | update
-
- * Type casting with "as" operator.  Typecasting with MyType(variable) syntax.  Replace with "instanceof".
+ * Typecasting with MyType(variable) syntax.  Replace with "instanceof".
 
     :lvimgrep / int(/ *.as
-    :lvimgrep / as / *.js
 
  * Preserve line comment before a member variable or function.
 
@@ -150,6 +150,10 @@ Vim commands are listed for some of these manual translations.
 
     :lvimgrep /MyClass/ *.as
 
+ * Does not tolerate missing semicolon after a variable definition.
+
+    :lvimgrep / var .*[^;]$/ *.as
+
  * Classes without constructors.
  
  * Multiple classes per file.
@@ -163,6 +167,10 @@ Vim commands are listed for some of these manual translations.
  * Static is defined first in ActionScript but last in this idiom of JavaScript.  So default assignments won't be found.
 
  * Globals.
+
+ * References to classes created by Flash Professional.  ActionScript compiler needs the literal class to avoid pruning.  These class references could be quoted, for example:
+
+    :'a,'zs/\([A-Za-z0-9]\+\)/"\1"/g
 
  * Preprocessor directives such as "include".
 

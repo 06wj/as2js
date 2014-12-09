@@ -59,7 +59,7 @@ var View = cc.Class.extend(
         var r;
         var parent = this.screen.rounds;
         for (var c = 0; c < parent.numChildren; c++) {
-            var child = parent.getChildAt(c) as MovieClip;
+            var child = parent.getChildAt(c);
             if (child) {
                 var names = child.name.split("_");
                 if (2 <= names.length) {
@@ -120,10 +120,10 @@ var View = cc.Class.extend(
         for (var h = hits.length - 1; 0 <= h; h--) {
             found = null;
             var hit = hits[h];
-            if (hit is MovieClip && this.screen.rounds != hit) {
-                found = hit as MovieClip;
+            if (hit instanceof MovieClip && this.screen.rounds != hit) {
+                found = hit;
             }
-            else if (hit.parent && hit.parent is MovieClip && this.screen.rounds != hit.parent) {
+            else if (hit.parent && hit.parent instanceof MovieClip && this.screen.rounds != hit.parent) {
                 found = hit.parent;
             }
             if (found) {

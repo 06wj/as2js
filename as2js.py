@@ -377,6 +377,9 @@ def _parseFuncs(klassName, klassContent, funcP, instance = True):
             content = localVariables(content)
             content = trace(content)
             content = superClass(content)
+            content = catch(content)
+            content = asType(content)
+            content = isInstanceOf(content)
         content = indent(content, 1)
         content = defaultArgumentText + content
         if instance:
@@ -456,6 +459,48 @@ def trace(funcContent):
     cc.log(1)
     """
     return re.sub(traceP, r'\1' + cfg.log + r'\2', funcContent)
+
+
+catchP = re.compile(r'(\bcatch\s*\()(\w+):[^\(]+\)')
+
+def catch(funcContent):
+    r"""
+    >>> print catch('catch(err:Error)');
+    catch(err)
+    """
+    return re.sub(catchP, r'\1\2)', funcContent)
+
+
+asP = re.compile(r'\s+as\s+\w+\b')
+
+def asType(funcContent):
+    r"""Only simple, strict form of weak typecasting.
+    >>> print asType('child as DisplayObjectContainer;');
+    child;
+    >>> print asType('child as DisplayObjectContainer');
+    child
+
+    Careful of comments.
+    >>> print asType('/* This child as a display object. */');
+    /* This child display object. */
+    """
+    return re.sub(asP, r'', funcContent)
+
+
+isP = re.compile(r'\s+is\s+(\w+)\b')
+
+def isInstanceOf(funcContent):
+    r"""Only simple, strict form of weak typecasting.
+    >>> print isInstanceOf('child is DisplayObjectContainer;');
+    child instanceof DisplayObjectContainer;
+    >>> print isInstanceOf('child is DisplayObjectContainer');
+    child instanceof DisplayObjectContainer
+
+    Careful of comments.
+    >>> print isInstanceOf('/* This child is a display object. */');
+    /* This child instanceof a display object. */
+    """
+    return re.sub(isP, r' instanceof \1', funcContent)
 
 
 def _findLocalDeclarations(funcContent):
