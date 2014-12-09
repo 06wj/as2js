@@ -379,6 +379,7 @@ def _parseFuncs(klassName, klassContent, funcP, instance = True):
             content = superClass(content)
             content = catch(content)
             content = asType(content)
+            content = intType(content)
             content = isInstanceOf(content)
         content = indent(content, 1)
         content = defaultArgumentText + content
@@ -490,7 +491,7 @@ def asType(funcContent):
 isP = re.compile(r'\s+is\s+(\w+)\b')
 
 def isInstanceOf(funcContent):
-    r"""Only simple, strict form of weak typecasting.
+    r"""Only simple, strict form of is class.
     >>> print isInstanceOf('child is DisplayObjectContainer;');
     child instanceof DisplayObjectContainer;
     >>> print isInstanceOf('child is DisplayObjectContainer');
@@ -501,6 +502,22 @@ def isInstanceOf(funcContent):
     /* This child instanceof a display object. */
     """
     return re.sub(isP, r' instanceof \1', funcContent)
+
+
+intTypeP = re.compile(r'([^\.\w])\bint\(')
+
+def intType(funcContent):
+    r"""Only simple, strict form of integer casting.
+    >>> print intType('(int(a))');
+    (Math.floor(a))
+    >>> print intType(' int(a/-1.0 + 1)');
+     Math.floor(a/-1.0 + 1)
+    >>> print intType('A.int(a/-1.0 + 1)');
+    A.int(a/-1.0 + 1)
+    >>> print intType('int(a/-1.0 + 1)');
+    int(a/-1.0 + 1)
+    """
+    return re.sub(intTypeP, r'\1Math.floor(', funcContent)
 
 
 def _findLocalDeclarations(funcContent):

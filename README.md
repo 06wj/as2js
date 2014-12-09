@@ -81,6 +81,9 @@ Features
  
  * Simple pattern of "is" into "instanceof".
 
+ * Typecasting with int(float) syntax using Math.floor.
+
+
 Not supported
 =============
 
@@ -103,7 +106,7 @@ Vim commands are listed for some of these manual translations.
 
  * Typecasting with MyType(variable) syntax.  Replace with "instanceof".
 
-    :lvimgrep / int(/ *.as
+    :lvimgrep / uint(/ *.as
 
  * Preserve line comment before a member variable or function.
 
