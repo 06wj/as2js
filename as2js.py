@@ -61,9 +61,11 @@ def staticProps(klassName, klassContent):
 
     Namespace first. 
     Defining an array of objects and an inline comment.
-    >>> print staticProps('View', 'private static var items:Array=[{a: 1},//1\n{b: 2}];')
+    Do not replace object key (if a colon follows).
+    >>> print staticProps('View', 'private static var i:int;\nprivate static var items:Array=[{a: 1},//1\n{b: 2, i: i}];')
+    View.i;
     View.items=[{a: 1},//1
-    {b: 2}];
+    {b: 2, i: View.i}];
 
     Declared, undefined variable.
     >>> staticProps('FlxBasic', 'public static var _ACTIVECOUNT:uint;')
@@ -501,6 +503,11 @@ def scopeMembers(memberDeclarations, funcContent, scope):
     >>> print scopeMembers(['end'], 'gotoAndPlay("end");\ntrace("The end");', 'View')
     gotoAndPlay("end");
     trace("The View.end");
+
+    Careful replacement is unaware of quoted string context.
+    >>> print scopeMembers(['STYLE_PLATFORMER'], 'case STYLE_PLATFORMER:\n{a: 1, STYLE_PLATFORMER: STYLE_PLATFORMER};', 'FlxCamera')
+    case FlxCamera.STYLE_PLATFORMER:
+    {a: 1, STYLE_PLATFORMER: FlxCamera.STYLE_PLATFORMER};
     """
     scoped = funcContent
     localDeclarations = _findLocalDeclarations(funcContent)
@@ -512,8 +519,10 @@ def scopeMembers(memberDeclarations, funcContent, scope):
             if identifier not in memberIdentifiers:
                 memberIdentifiers.append(identifier)
     for identifier in memberIdentifiers:
-        memberIdentifierP = re.compile(r'([^\w\."\']+)\b(%s)\b' % identifier)
+        memberIdentifierP = re.compile(r'([^\w\."\']+)\b(%s)\b(?!:)' % identifier)
         scoped = re.sub(memberIdentifierP, r'\1%s.\2' % scope, scoped)
+        caseP = re.compile(r'(\bcase\s+)\b(%s\s*:)' % identifier)
+        scoped = re.sub(caseP, r'\1%s.\2' % scope, scoped)
     return scoped
 
 

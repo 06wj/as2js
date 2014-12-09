@@ -160,6 +160,8 @@ Vim commands are listed for some of these manual translations.
 
     :lvimgrep /\$/ *.js
 
+ * Static is defined first in ActionScript but last in this idiom of JavaScript.  So default assignments won't be found.
+
  * Globals.
 
  * Preprocessor directives such as "include".
