@@ -1,3 +1,6 @@
+/*jslint node: true */
+"use strict";
+
 require("flash/display/Bitmap.js");
 require("flash/display/BitmapData.js");
 require("flash/display/DisplayObject.js");
@@ -14,7 +17,8 @@ require("flash/events/MouseEvent.js");
 /**
  * By Ethan Kennerly
  */
-var View = cc.Class.extend({
+var View = cc.Class.extend(
+{
     feedbackClip: undefined,
     model: null,
     screen: null,

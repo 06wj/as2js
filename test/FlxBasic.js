@@ -6,7 +6,8 @@
  * 
  * @author	Adam Atomic
  */
-var FlxBasic = cc.Class.extend({
+var FlxBasic = cc.Class.extend(
+{
     /**
      * IDs seem like they could be pretty useful, huh?
      * They're not actually used for anything yet though.

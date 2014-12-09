@@ -655,16 +655,27 @@ requireP = re.compile(r'\s*\bimport\s+([\w\.]+)')
 
 def requires(text):
     r"""Reformat import statement as node.js require.
-    >>> requires(' import flash.display.Bitmap;\nprivate var i:int;')
-    'require("flash/display/Bitmap.js");\n\n'
-    >>> requires('public var j:uint;\n import flash.display.Bitmap;\nprivate var i:int;')
-    'require("flash/display/Bitmap.js");\n\n'
+    >>> print requires(' import flash.display.Bitmap;\nprivate var i:int;')
+    /*jslint node: true */
+    "use strict";
+    <BLANKLINE>
+    require("flash/display/Bitmap.js");
+    <BLANKLINE>
+    <BLANKLINE>
+    >>> print requires('public var j:uint;\n import flash.display.Bitmap;\nprivate var i:int;')
+    /*jslint node: true */
+    "use strict";
+    <BLANKLINE>
+    require("flash/display/Bitmap.js");
+    <BLANKLINE>
+    <BLANKLINE>
     """
     modules = requireP.findall(text)
     requiresText = ''
     if modules:
         requires = ['require("%s");' % (module.replace('.', '/') + '.js') 
             for module in modules]
+        requires.insert(0, '/*jslint node: true */\n"use strict";\n')
         requiresText = '\n'.join(requires) + '\n\n'
     return requiresText
 
@@ -719,7 +730,7 @@ def convert(text):
     str += requires(text)
     if klassComment:
         str += indent(klassComment, 0) + '\n'
-    str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend({' 
+    str += 'var ' + klassName + ' = ' + cfg.baseClass + '.extend(\n{' 
     str += '\n' + props(klassContent) 
     str += '\n\n' + methods(klassName, klassContent)
     str += '\n});'

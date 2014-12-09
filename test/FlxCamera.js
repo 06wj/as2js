@@ -1,3 +1,6 @@
+/*jslint node: true */
+"use strict";
+
 require("flash/display/Bitmap.js");
 require("flash/display/BitmapData.js");
 require("flash/display/Sprite.js");
@@ -14,7 +17,8 @@ require("flash/geom/Rectangle.js");
  * 
  * @author Adam Atomic
  */
-var FlxCamera = cc.Class.extend({
+var FlxCamera = cc.Class.extend(
+{
     /**
      * The X position of this camera's display.  Zoom does NOT affect this number.
      * Measured in pixels from the left side of the flash window.
