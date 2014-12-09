@@ -71,6 +71,8 @@ Features
 
  * Preserve variable comment.
 
+ * Configure substitute require paths.
+
 Not supported
 =============
 
@@ -81,7 +83,7 @@ Vim commands are listed for some of these manual translations.
 
  * Multiple variables assigned with a comma.
 
-    :lvimgrep / var [^;]*, / *.as
+    :lvimgrep / var [^;]*, [^;]*:[A-Za-z\*]/ *.as
 
  * Extending a base class other than the configuration baseClass.
 

@@ -1,12 +1,12 @@
 /*jslint node: true */
 "use strict";
 
-require("flash/display/Bitmap.js");
-require("flash/display/BitmapData.js");
-require("flash/display/DisplayObject.js");
-require("flash/display/DisplayObjectContainer.js");
-require("flash/display/MovieClip.js");
-require("flash/display/Sprite.js");
+require("src/View/Bitmap.js");
+require("src/View/BitmapData.js");
+require("src/View/DisplayObject.js");
+require("src/View/DisplayObjectContainer.js");
+require("src/View/MovieClip.js");
+require("src/View/Sprite.js");
 require("flash/geom/Matrix.js");
 require("flash/geom/Point.js");
 require("flash/geom/Rectangle.js");

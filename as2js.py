@@ -655,18 +655,20 @@ requireP = re.compile(r'\s*\bimport\s+([\w\.]+)')
 
 def requires(text):
     r"""Reformat import statement as node.js require.
+    Replaces "." with "/".
+    Replaces path from requireSubs.
     >>> print requires(' import flash.display.Bitmap;\nprivate var i:int;')
     /*jslint node: true */
     "use strict";
     <BLANKLINE>
-    require("flash/display/Bitmap.js");
+    require("src/View/Bitmap.js");
     <BLANKLINE>
     <BLANKLINE>
     >>> print requires('public var j:uint;\n import flash.display.Bitmap;\nprivate var i:int;')
     /*jslint node: true */
     "use strict";
     <BLANKLINE>
-    require("flash/display/Bitmap.js");
+    require("src/View/Bitmap.js");
     <BLANKLINE>
     <BLANKLINE>
     >>> print requires('public var j:uint;')
@@ -676,8 +678,13 @@ def requires(text):
     modules = requireP.findall(text)
     requiresText = ''
     if modules:
-        requires = ['require("%s");' % (module.replace('.', '/') + '.js') 
-            for module in modules]
+        requires = []
+        for module in modules:
+            mod = module.replace('.', '/') + '.js'
+            for fromPath, toPath in cfg.requireSubs:
+                mod = mod.replace(fromPath, toPath)
+            req = 'require("%s");' % mod
+            requires.append(req)
         requires.insert(0, '/*jslint node: true */\n"use strict";\n')
         requiresText = '\n'.join(requires) + '\n\n'
     else:
