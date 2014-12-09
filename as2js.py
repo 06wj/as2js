@@ -27,8 +27,8 @@ localVariableEscaped = '(' + varEscape + '\s+)' + argumentSave
 notStatic = '(?<!static\s)'
 staticNamespace = '(?:' + 'static\s+' + namespace \
                   + '|' + namespace + '\s+static' + ')'
-
-argument = '(\w+)\s*(:\w+)?(\s*=\s*\w+)?'
+literal = '[\w\-\."\']+'
+argument = '(\w+)\s*(:\w+)?(\s*=\s*' + literal + ')?'
 argumentP =  re.compile(argument, re.S)
 
 commentEnd = '*/'
@@ -41,7 +41,7 @@ functionPrefix = commentPrefix + '(?:override\s+)?'
 functionEnd = '}'
 functionEndEscape = '@'
 functionEndEscapeEscape = 'functionEndEscapeEscape'
-function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*\w+)?\s*{([^' + functionEndEscape + ']*?)' + functionEndEscape
+function = 'function\s+(\w+)\s*\(([^\)]*)\)\s*(?::\s*[\w\*]+)?\s*{([^' + functionEndEscape + ']*?)' + functionEndEscape
 
 staticPropP =  re.compile(commentPrefix
     + staticNamespace
@@ -526,12 +526,12 @@ def methods(klassName, klassContent):
     ['/** comment ~', '/** var ~']
 
     Arguments.  Convert default value.
-    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;\n\n\n\n/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nx=X}')
+    >>> print methods('FlxCamera', '/** comment */\npublic var ID:int;\n\n\n\n/* var ~ */\npublic function FlxCamera(X:int,Y:int,Width:int,Height:int,Zoom:Number=-1){\nx=X}')
         /* var ~ */
         ctor: function(X, Y, Width, Height, Zoom)
         {
             if (undefined === Zoom) {
-                Zoom=0;
+                Zoom=-1;
             }
             x=X
         }
@@ -605,7 +605,7 @@ def staticMethods(klassName, klassContent):
     ''
 
     Arguments.  Does not convert default value.
-    >>> print staticMethods('FlxCamera', '/** comment */\npublic var x:int;\npublic static var x:int;\nprivate static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0){\nf();\nx=X}')
+    >>> print staticMethods('FlxCamera', '/** comment */\npublic var x:int;\npublic static var x:int;\nprivate static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0):*{\nf();\nx=X}')
     FlxCamera.f = function()
     {
     }
@@ -624,8 +624,8 @@ def staticMethods(klassName, klassContent):
     >>> staticMethods('FlxCamera', '/** var */\npublic function f(){};')
     ''
 
-    Multiple with 2 lines between.
-    >>> print staticMethods('C', 'private static function f(){}private static function g(){}')
+    Multiple with 2 lines between.  Return type any.
+    >>> print staticMethods('C', 'private static function f(){}private static function g():*{}')
     C.f = function()
     {
     }
@@ -669,6 +669,9 @@ def requires(text):
     require("flash/display/Bitmap.js");
     <BLANKLINE>
     <BLANKLINE>
+    >>> print requires('public var j:uint;')
+    "use strict";
+    <BLANKLINE>
     """
     modules = requireP.findall(text)
     requiresText = ''
@@ -677,6 +680,9 @@ def requires(text):
             for module in modules]
         requires.insert(0, '/*jslint node: true */\n"use strict";\n')
         requiresText = '\n'.join(requires) + '\n\n'
+    else:
+        requiresText = '"use strict";\n'
+        pass
     return requiresText
 
 

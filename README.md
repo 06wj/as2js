@@ -77,7 +77,11 @@ Not supported
 Vim commands are listed for some of these manual translations.
 
 
- * Careful scoping is unaware of quoted string context.
+ * Scoping is unaware of quoted string context.
+
+ * Multiple variables assigned with a comma.
+
+    :lvimgrep / var [^;]*, / *.as
 
  * Extending a base class other than the configuration baseClass.
 
