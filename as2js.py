@@ -688,7 +688,7 @@ def staticMethods(klassName, klassContent):
     >>> print staticMethods('FlxCamera', '/** comment */\npublic var x:int;\npublic static var x:int;\nprivate static function f(){}/* var ~ */\npublic static function create(X:int,Y:int,Width:int,Height:int,Zoom:Number=0):*{\nf();\nx=X}')
     FlxCamera.f = function()
     {
-    }
+    };
     <BLANKLINE>
     /* var ~ */
     FlxCamera.create = function(X, Y, Width, Height, Zoom)
@@ -698,7 +698,7 @@ def staticMethods(klassName, klassContent):
         }
         FlxCamera.f();
         FlxCamera.x=X
-    }
+    };
 
     Ignore methods.
     >>> staticMethods('FlxCamera', '/** var */\npublic function f(){};')
@@ -708,25 +708,25 @@ def staticMethods(klassName, klassContent):
     >>> print staticMethods('C', 'private static function f(){}private static function g():*{}')
     C.f = function()
     {
-    }
+    };
     <BLANKLINE>
     C.g = function()
     {
-    }
+    };
 
     Nested local function brackets.
     >>> print staticMethods('C', 'private static function f(){\nfunction g(){}}')
     C.f = function()
     {
         function g(){}
-    }
+    };
     """ 
     funcs = _parseFuncs(klassName, klassContent, staticMethodP, False)
     functionNames = [func['name'] for func in funcs]
     strs = []
     for func in funcs:
         func['name'] = klassName + '.' + func['name']
-        str = _formatFunc(func, ' = ')
+        str = _formatFunc(func, ' = ') + ';'
         strs.append(str)
     return '\n\n'.join(strs)
 

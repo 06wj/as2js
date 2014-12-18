@@ -89,6 +89,11 @@ Not supported
 
 Vim commands are listed for some of these manual translations.
 
+ * Block comment on a single line.
+
+ * Set undefined static property to undefined.
+
+ * Static-only class needs no extend, so "extend" part could be replaced with an empty object {}.
 
  * Scoping is unaware of quoted string context.
 
@@ -157,11 +162,7 @@ Vim commands are listed for some of these manual translations.
 
     :lvimgrep / var .*[^;]$/ *.as
 
- * Classes without constructors.
- 
  * Multiple classes per file.
-
- * Classes without functions.
 
  * Nonalphanumeric variable and function characters like '$'.
 
@@ -171,7 +172,10 @@ Vim commands are listed for some of these manual translations.
 
  * Globals.
 
- * References to classes created by Flash Professional.  ActionScript compiler needs the literal class to avoid pruning.  These class references could be quoted, for example:
+ * References to classes created by Flash Professional.  
+   ActionScript compiler needs the literal class to avoid pruning.  
+   Strings are more portable than classes.
+   These class references could be quoted, for example:
 
     :'a,'zs/\([A-Za-z0-9]\+\)/"\1"/g
 
@@ -179,4 +183,49 @@ Vim commands are listed for some of these manual translations.
 
     :argdo /\#include 
 
+ * Flash utilities like Dictionary, getTimer, setTimeout, and others.
+
  * Anything else not mentioned in features above.
+
+
+
+Not supported Flash: to Cocos2D v2
+==================================
+
+ * .parent: getParent() or setParent()
+
+    :args *.js
+    :argdo %s/\.parent\>/.getParent()/gIce | update
+
+ * .visible: isVisible() or setVisible()
+
+    :args *.js
+    :%s/\.visible = /.setVisible(/gIce | update
+    :%s/\.visible\>/.isVisible(/gIce | update
+
+ * .mouseEnabled:  isEnabled(), setEnabled()
+
+ * .numChildren: getChildCount() or getChildren()
+
+ * .addChildAt(child, z):  addChild(child, z)
+
+ * Custom function on parent:  parent.removeAllChildren()
+
+ * addEventListener(MouseEvent.CLICK: Control button callback.
+
+
+Not supported Flash: to SpriteBuilder-Reader-js
+===============================================
+
+See <http://github.com/ethankennerly/SpriteBuilder-Reader-js>
+
+ * .name: getName() or setName()  (v3)
+
+ * .gotoAndPlay:  animationManager.runAnimations
+
+    :%s/gotoAndPlay/animationManager.runAnimations/gIce
+
+ * .currentLabel:  .animationManager.getRunningSequenceName()
+
+    :args *.js
+    :argdo %s/\.currentLabel/.animationManager.getRunningSequenceName()/gIce | update
