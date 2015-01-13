@@ -13,7 +13,7 @@ Usage
 
 * Reformat:
 
-    python as2js.py file.as
+    python as2js.py file.as [file.as ...]
 
 * Manually conform JavaScript requires and libraries.
 
