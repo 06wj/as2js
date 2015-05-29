@@ -91,11 +91,22 @@ Not supported
 
 Vim commands are listed for some of these manual translations.
 
+ * Block comment in a function.
+
+ * Variable assignment to a commented line followed by another line with value.  Example:
+
+    var a = // 1;
+            2;
+
  * Block comment on a single line.
+
+ * Logical-assignments such as:  a ||= b.  Instead does support a = a || b
 
  * Set undefined static property to undefined.
 
  * Static-only class needs no extend, so "extend" part could be replaced with an empty object {}.
+
+ * Integer constants like int.MAX_VALUE.
 
  * Scoping is unaware of quoted string context.
 

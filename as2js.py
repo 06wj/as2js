@@ -15,7 +15,7 @@ import textwrap
 
 import as2js_cfg as cfg
 
-literal = '[\w\-\."\']+'
+literal = r'[\w\-\."\'\\]+'
 argument = '(\w+)\s*(:\w+)?(\s*=\s*' + literal + ')?'
 var = 'var'
 varKeyword = r'(?:\bvar\b|\bconst\b)'
@@ -353,10 +353,15 @@ def _parseFuncs(klassName, klassContent, funcP, instance = True):
         return Klass.score;
 
     Do not prefix argument.
-    >>> klassContent = 'public static var score;\npublic static function f(score){return score;}'
+    >>> klassContent = 'public static var score;\npublic static function f(score="\\n"){return score;}'
     >>> funcs = _parseFuncs('Klass', klassContent, staticMethodP, False)
     >>> print funcs[0]['content']
-        return score;
+    <BLANKLINE>
+        if (undefined === score) {
+            score="\n";
+        }    return score;
+    >>> print funcs[0]['argumentText']
+    score
     """
     escaped = _escapeEnds(klassContent)
     funcs = funcP.findall(escaped)
