@@ -83,6 +83,8 @@ Features
 
  * Typecasting with int(float) syntax using Math.floor.
 
+ * Strip wildcard data type (:\*).
+
 
 Not supported
 =============

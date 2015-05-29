@@ -136,6 +136,7 @@ def _escapeEnds(original):
     Escape comment end, because non-greedy becomes greedy in context.  Example:
     blockCommentNonGreedy = '(\s*/\*[\s\S]+?\*/\s*){0,1}?'
     """
+    original = _escapeWildCard(original)
     commentEscaped = original \
         .replace(commentEndEscape, commentEndEscapeEscape) \
         .replace(commentEnd, commentEndEscape)
@@ -160,6 +161,7 @@ def _escapeLocal(original):
     >>> _escapeLocal('var ivar:uint = 0;\nvar varj:uint = cameras.length;')
     '& ivar:uint = 0;\n& varj:uint = cameras.length;'
     """
+    original = _escapeWildCard(original)
     escaped = original.replace(varEscape, varEscapeEscape)
     return re.sub(varKeywordP, varEscape, escaped)
 
@@ -190,6 +192,14 @@ def localVariables(funcContent):
     f();
     var ivar = 0;
     g();
+
+    Wildcard type :*
+    >>> print localVariables('var ivar = "wildcard";\nvar varj:uint = cameras.length;')
+    var ivar= "wildcard";
+    var varj = cameras.length;
+    >>> print localVariables('var ivar:* = "wildcard";\nvar varj:uint = cameras.length;')
+    var ivar= "wildcard";
+    var varj = cameras.length;
     """
     escaped = _escapeLocal(funcContent)
     variables = localVariableP.findall(escaped)
@@ -287,6 +297,18 @@ def _formatComment(blockComment):
         blockComment = blockComment.lstrip()
         blockComment += '\n'
     return blockComment
+
+
+def _escapeWildCard(klassContent):
+    """
+    >>> _escapeWildCard('')
+    ''
+    >>> _escapeWildCard(':*')
+    ''
+    >>> _escapeWildCard(':Object')
+    ':Object'
+    """
+    return klassContent.replace(':*', '')
 
 
 def _parseProps(klassName, klassContent, funcP):
